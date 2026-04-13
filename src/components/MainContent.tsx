@@ -28,16 +28,16 @@ const MainContent: React.FC<MainContentProps> = ({
   onGeneratingChange
 }) => {
   return (
-    <main className="flex-1 overflow-auto">
+    <main className="flex-1 min-h-0">
       {currentView === 'editor' && (
-        <VideoEditor 
+        <VideoEditor
           config={videoConfig}
           onConfigChange={onVideoConfigChange}
           isGenerating={isGenerating}
           onGeneratingChange={onGeneratingChange}
         />
       )}
-      
+
       {currentView === 'imageEditor' && (
         <ImageEditor
           config={imageConfig}
@@ -46,13 +46,17 @@ const MainContent: React.FC<MainContentProps> = ({
           onGeneratingChange={onGeneratingChange}
         />
       )}
-      
+
       {currentView === 'videos' && (
-        <GeneratedVideos />
+        <div className="overflow-auto h-full">
+          <GeneratedVideos />
+        </div>
       )}
-      
+
       {currentView === 'files' && (
-        <FileManagement />
+        <div className="overflow-auto h-full">
+          <FileManagement />
+        </div>
       )}
     </main>
   );

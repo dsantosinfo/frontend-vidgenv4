@@ -2,7 +2,7 @@
 // Substitua o conteúdo completo deste arquivo.
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Trash2, Settings, Plus, Move, Percent, Eye, ChevronsUpDown, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, Trash2, Settings, Plus, Move, Percent, Eye, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { DecorativeElement, FileUploadRecord, VideoConfig, ImageConfig, FilePurpose } from '../../types';
 import { apiRequest } from '../../config/api';
 import ScenePreview from './ScenePreview';
@@ -61,7 +61,7 @@ const DecorativeElementsEditor: React.FC<DecorativeElementsEditorProps> = ({
     formData.append('purpose', FilePurpose.DECORATIVE_ELEMENT);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/files/upload`, { method: 'POST', body: formData });
+      const response = await fetch('/api/v1/files/upload', { method: 'POST', body: formData });
       if (response.ok) {
         await fetchImageFiles();
       } else {

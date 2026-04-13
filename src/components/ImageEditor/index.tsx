@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { ImageConfig, TextElement } from '../../types';
-import { Palette, Type, Sparkles, Plus, Settings } from 'lucide-react';
+import { Palette, Type, Sparkles, Plus } from 'lucide-react';
 
 import ImageEditorTabs, { ImageEditorTab } from './ImageEditorTabs';
 import TemplateSelector from '../VideoEditor/TemplateSelector';
@@ -87,7 +87,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     <div className="h-full flex flex-col">
       <ImageEditorTabs activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <div className="flex-1 p-6 bg-slate-50">
+      <div className="flex-1 overflow-auto p-6 bg-slate-50">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-6">
             {renderActiveTabContent()}

@@ -1,9 +1,9 @@
 // File: src/components/VideoEditor/ConfigManager.tsx
-// Substitua o conteúdo completo deste arquivo.
 
 import React, { useRef, useState } from 'react';
 import { Download, Upload, FileText, AlertCircle, CheckCircle, ClipboardPaste } from 'lucide-react';
 import { VideoConfig } from '../../types';
+import { convertToApiPayload } from '../../config/api';
 
 // Interface de propriedades para este componente
 interface ConfigManagerProps {
@@ -11,7 +11,7 @@ interface ConfigManagerProps {
   onConfigChange: (config: VideoConfig) => void;
 }
 
-// NOVA FUNÇÃO DE LIMPEZA
+// FUNÇÃO DE LIMPEZA
 const cleanConfigForExport = (obj: any): any => {
   if (obj === null || obj === undefined) return undefined;
   if (Array.isArray(obj)) {
@@ -24,7 +24,7 @@ const cleanConfigForExport = (obj: any): any => {
   const newObj: { [key: string]: any } = {};
   for (const key of Object.keys(obj)) {
     let value = obj[key];
-    
+
     if (key === 'font' && typeof value === 'string') {
         value = value.split(/[\\/]/).pop() || null;
     }
@@ -35,14 +35,12 @@ const cleanConfigForExport = (obj: any): any => {
 
     if (cleanedValue === null || cleanedValue === undefined) continue;
     if (Array.isArray(cleanedValue) && cleanedValue.length === 0) continue;
-    
+
     newObj[key] = cleanedValue;
   }
   return newObj;
 };
 
-
-// CORREÇÃO: Usando o nome correto da interface -> ConfigManagerProps
 const ConfigManager: React.FC<ConfigManagerProps> = ({ config, onConfigChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<{
@@ -51,18 +49,13 @@ const ConfigManager: React.FC<ConfigManagerProps> = ({ config, onConfigChange })
   }>({ type: null, message: '' });
   const [pastedJson, setPastedJson] = useState('');
 
-  const convertToApiFormat = (feConfig: VideoConfig) => {
-    return {
-      ...feConfig,
-      scenes: feConfig.scenes.map(scene => ({
-        ...scene,
-        transition_from_previous: scene.transition ? { type: scene.transition, duration: 1.0 } : null,
-        text_elements: scene.text_elements.map(textEl => ({
-          ...textEl,
-          animation: textEl.animation ? { type: textEl.animation, duration: 1.0 } : null
-        }))
-      })),
-    };
+  const getConfigForExport = () => {
+    const apiReadyConfig = convertToApiPayload(config);
+    return cleanConfigForExport(apiReadyConfig);
+  };
+
+  const getFullApiPayload = () => {
+    return convertToApiPayload(config);
   };
 
   const convertApiFormatToFrontend = (apiConfig: any): VideoConfig => {
@@ -77,15 +70,6 @@ const ConfigManager: React.FC<ConfigManagerProps> = ({ config, onConfigChange })
         return feScene;
     });
     return feConfig as VideoConfig;
-  };
-
-  const getConfigForExport = () => {
-    const apiReadyConfig = convertToApiFormat(config);
-    return cleanConfigForExport(apiReadyConfig);
-  };
-  
-  const getFullApiPayload = () => {
-    return { config: convertToApiFormat(config) };
   };
 
   const exportConfig = () => {

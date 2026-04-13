@@ -1,9 +1,10 @@
 // File: src/components/VideoEditor/ScenePreview.tsx
 // Substitua o conteúdo completo deste arquivo.
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, RefreshCw, X, Loader2 } from 'lucide-react';
-import { Scene, VideoTemplate, DecorativeElement } from '../../types';
+import { Scene, DecorativeElement } from '../../types';
+import { VIDEO_TEMPLATES } from '../../config/templates';
 import { apiRequest } from '../../config/api';
 
 interface ScenePreviewProps {
@@ -21,16 +22,7 @@ const ScenePreview: React.FC<ScenePreviewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const templates = useMemo((): Record<string, VideoTemplate> => ({
-    instagram_story: { name: 'instagram_story', width: 1080, height: 1920, fps: 24, aspectRatio: '9/16', description: 'Instagram Story' },
-    instagram_feed: { name: 'instagram_feed', width: 1080, height: 1350, fps: 24, aspectRatio: '4/5', description: 'Instagram Feed' },
-    facebook_feed: { name: 'facebook_feed', width: 1200, height: 630, fps: 24, aspectRatio: '120/63', description: 'Facebook Feed' },
-    youtube_thumbnail: { name: 'youtube_thumbnail', width: 1280, height: 720, fps: 24, aspectRatio: '16/9', description: 'YouTube' },
-    tiktok: { name: 'tiktok', width: 1080, height: 1920, fps: 24, aspectRatio: '9/16', description: 'TikTok' },
-    custom: { name: 'custom', width: 1920, height: 1080, fps: 24, aspectRatio: '16/9', description: 'Custom' },
-  }), []);
-
-  const currentTemplate = templates[template] || templates['instagram_story'];
+  const currentTemplate = VIDEO_TEMPLATES[template] || VIDEO_TEMPLATES['instagram_story'];
 
   // Lógica original de geração de preview, que já funcionava corretamente.
   const generateServerPreview = async () => {
@@ -78,8 +70,8 @@ const ScenePreview: React.FC<ScenePreviewProps> = ({
 
 
   return (
-    // ESTILO CORRIGIDO: Contêiner com altura máxima e comportamento "sticky". Lógica interna preservada.
-    <div className="sticky top-6 bg-white rounded-xl border border-slate-200 p-4 space-y-4 max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
+    // Sticky container — SEM overflow para não quebrar o comportamento sticky
+    <div className="sticky top-6 bg-white rounded-xl border border-slate-200 p-4 space-y-4 flex flex-col">
       <div className="flex items-center justify-between flex-shrink-0">
         <h3 className="font-semibold text-slate-900 flex items-center gap-2"><Eye className="w-5 h-5 text-indigo-600" />Preview da Cena</h3>
         <button onClick={generateServerPreview} disabled={isGenerating} className="flex items-center gap-2 px-3 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 text-sm">
@@ -87,8 +79,8 @@ const ScenePreview: React.FC<ScenePreviewProps> = ({
           Atualizar
         </button>
       </div>
-      <div 
-        className="relative w-full bg-slate-200 rounded-lg overflow-hidden shadow-inner flex items-center justify-center flex-1" 
+      <div
+        className="relative w-full bg-slate-200 rounded-lg overflow-hidden shadow-inner flex items-center justify-center"
         style={{ aspectRatio: `${currentTemplate.width} / ${currentTemplate.height}` }}
       >
         {isGenerating && (
@@ -104,10 +96,10 @@ const ScenePreview: React.FC<ScenePreviewProps> = ({
                 <p className="text-xs text-red-600 mt-1">{error}</p>
             </div>
         )}
-        
+
         {previewImageUrl && !isGenerating && !error && (
-            <img 
-                src={previewImageUrl} 
+            <img
+                src={previewImageUrl}
                 alt="Preview da Cena"
                 className="max-w-full max-h-full object-contain"
             />

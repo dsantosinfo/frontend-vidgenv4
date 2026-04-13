@@ -32,8 +32,8 @@ const VideoEditor: React.FC<VideoEditorProps> = ({
         <EditorTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
       
-      {/* CORREÇÃO PRINCIPAL: A div abaixo NÃO DEVE ter 'overflow-auto'. A rolagem é gerenciada pelo componente <main> em MainContent.tsx */}
-      <div className="flex-1 p-6 bg-slate-50">
+      {/* Container de conteúdo com overflow próprio para permitir sticky nos previews */}
+      <div className="flex-1 overflow-auto p-6 bg-slate-50">
         {activeTab === 'template' && (
           <TemplateSelector 
             selectedTemplate={config.template}

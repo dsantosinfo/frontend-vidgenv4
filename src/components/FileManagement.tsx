@@ -1,7 +1,7 @@
 // File: src/components/FileManagement.tsx
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Trash2, RefreshCw, File, Image, Video, Music, Eye, ChevronDown } from 'lucide-react';
+import { Upload, Trash2, RefreshCw, Image, Video, Music, Eye } from 'lucide-react';
 import { FileUploadRecord, FilePurpose } from '../types';
 import { apiRequest } from '../config/api';
 import AudioPreview from './VideoEditor/AudioPreview';
@@ -62,9 +62,16 @@ const FileManagement: React.FC = () => {
       if (response.ok) {
         await fetchFiles();
       } else {
-        const errorData = await response.json();
-        alert(`Falha no upload: ${errorData.detail || 'Erro desconhecido'}`);
-        console.error("Falha no upload:", errorData);
+        let errorMessage = 'Erro desconhecido';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorMessage;
+        } catch {
+          // Resposta sem corpo JSON — usa status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        alert(`Falha no upload: ${errorMessage}`);
+        console.error('Falha no upload:', errorMessage);
       }
     } catch (error) {
       console.error('Erro no upload:', error);
@@ -74,18 +81,25 @@ const FileManagement: React.FC = () => {
   };
   
   const handleDelete = async (filename: string) => {
-    if (!window.confirm(`Tem certeza que deseja deletar o arquivo e todos os seus registros?`)) {
+    if (!window.confirm(`Tem certeza que deseja deletar o arquivo "${filename}" e todos os seus registros?`)) {
       return;
     }
+
+    // Encontra o arquivo antes de deletar (evita closure stale)
+    const deletedFile = [...files.image, ...files.video, ...files.audio].find(f => f.new_filename === filename);
+
     try {
       await apiRequest(`/api/v1/files/delete_upload/${filename}`, {
         method: 'DELETE',
       });
-      fetchFiles();
-      const deletedFile = [...files.image, ...files.video, ...files.audio].find(f => f.new_filename === filename);
+
+      // Limpa a seleção se era o arquivo deletado
       if (deletedFile && selectedFileId === deletedFile.id) {
         setSelectedFileId(null);
       }
+
+      // Re-fetch após limpar a seleção
+      await fetchFiles();
     } catch (error) {
       console.error('Erro ao deletar arquivo:', error);
       alert('Não foi possível deletar o arquivo.');

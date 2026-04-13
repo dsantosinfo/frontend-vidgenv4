@@ -2,7 +2,7 @@
 // Substitua o conteúdo completo deste arquivo.
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, RotateCcw, Clock, Maximize2, Download, AlertTriangle, Loader2 } from 'lucide-react'; // CORREÇÃO APLICADA AQUI
+import { Play, Pause, Volume2, VolumeX, Maximize2, Download, AlertTriangle, Loader2 } from 'lucide-react'; // CORREÇÃO APLICADA AQUI
 
 interface VideoPreviewProps {
   videoPath: string;

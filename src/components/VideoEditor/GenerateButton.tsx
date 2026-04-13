@@ -37,7 +37,15 @@ const GenerateButton: React.FC<GenerateButtonProps> = ({
           }
         } catch (error) {
           console.error('Erro ao verificar status da tarefa:', error);
+          // Exibe erro visível ao usuário em vez de silenciar
+          setTaskStatus({
+            id: currentTaskId || '',
+            status: 'failed',
+            start_time: new Date().toISOString(),
+            error: 'Erro ao verificar status da tarefa. Verifique sua conexão.'
+          });
           onGeneratingChange(false);
+          setCurrentTaskId(null);
         }
       }, 3000);
     }

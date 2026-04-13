@@ -2,7 +2,7 @@
 // Substitua o conteúdo completo deste arquivo.
 
 import React from 'react';
-import { Menu, Video, Loader2, Download, Upload, Image as ImageIcon } from 'lucide-react';
+import { Menu, Video, Loader2, Image as ImageIcon } from 'lucide-react';
 
 interface HeaderProps {
   currentView: 'editor' | 'imageEditor' | 'videos' | 'files';

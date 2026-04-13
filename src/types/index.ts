@@ -27,6 +27,10 @@ export interface Position {
   y: string | number | 'auto';
 }
 
+export type SubtitleHorizontalAlignment = 'left' | 'center' | 'right';
+export type SubtitleVerticalAlignment = 'top' | 'center' | 'bottom';
+export type SubtitlePosition = [SubtitleHorizontalAlignment, SubtitleVerticalAlignment];
+
 export interface SubtitleConfig {
   enabled: boolean;
   font: string;
@@ -34,7 +38,7 @@ export interface SubtitleConfig {
   color: string;
   stroke_color: string | null;
   stroke_width: number;
-  position: [string, any];
+  position: SubtitlePosition;
 }
 
 export interface AudioTrack {
@@ -94,6 +98,7 @@ export interface TextElement {
   stroke_width: number;
   shadow: Shadow | null;
   margin_bottom: number;
+  max_width?: number | null;
   vertical_offset?: number;
   outer_glow?: OuterGlow | null;
   extrude?: Extrude | null;

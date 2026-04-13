@@ -1,7 +1,18 @@
 // File: src/config/api.ts
-// Substitua o conteúdo completo deste arquivo.
 
 import { VideoConfig } from '../types';
+
+// Constantes configuráveis
+export const DEFAULT_TRANSITION_DURATION = 1.0;
+export const DEFAULT_ANIMATION_DURATION = 1.0;
+
+// Debounces para previews
+export const PREVIEW_DEBOUNCE_MS = 1200;
+export const TEXT_PREVIEW_DEBOUNCE_MS = 700;
+
+// Intervalos de polling
+export const TASK_POLLING_INTERVAL_MS = 3000;
+export const TASK_LIST_POLLING_INTERVAL_MS = 5000;
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
@@ -12,12 +23,16 @@ export const convertToApiPayload = (config: VideoConfig) => {
       const { transition, ...restOfScene } = scene;
       return {
         ...restOfScene,
-        transition_from_previous: transition ? { type: transition, duration: 1.0 } : null,
+        transition_from_previous: transition
+          ? { type: transition, duration: DEFAULT_TRANSITION_DURATION }
+          : null,
         text_elements: scene.text_elements.map(textEl => {
           const { animation, ...restOfTextEl } = textEl;
           return {
             ...restOfTextEl,
-            animation: animation ? { type: animation, duration: 1.0 } : null
+            animation: animation
+              ? { type: animation, duration: DEFAULT_ANIMATION_DURATION }
+              : null
           };
         })
       };
@@ -42,8 +57,24 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     const response = await fetch(url, defaultOptions);
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-      throw new Error(errorData.detail || `Erro HTTP: ${response.status}`);
+      let errorDetail: string;
+      try {
+        const errorData = await response.json();
+        // FastAPI pode retornar detail como string ou array de validação
+        if (typeof errorData.detail === 'string') {
+          errorDetail = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          // Erros de validação FastAPI: [{loc, msg, type}, ...]
+          errorDetail = errorData.detail.map((e: any) => e.msg || e.message).join('; ');
+        } else if (typeof errorData.detail === 'object') {
+          errorDetail = JSON.stringify(errorData.detail);
+        } else {
+          errorDetail = response.statusText;
+        }
+      } catch {
+        errorDetail = response.statusText;
+      }
+      throw new Error(errorDetail || `Erro HTTP: ${response.status}`);
     }
 
     const contentType = response.headers.get('content-type');

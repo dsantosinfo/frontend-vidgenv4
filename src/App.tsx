@@ -1,7 +1,7 @@
 // File: src/App.tsx
 // Substitua o conteúdo completo deste arquivo.
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
@@ -26,6 +26,7 @@ const defaultTextElement: TextElement = {
   stroke_width: 0,
   shadow: null,
   margin_bottom: 20,
+  max_width: null,
 };
 
 const defaultScene: Scene = {

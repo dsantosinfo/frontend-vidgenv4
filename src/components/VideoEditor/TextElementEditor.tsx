@@ -2,11 +2,10 @@
 // Substitua o conteúdo completo deste arquivo.
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-    Eye, Palette, Type, Move, Sparkles, RefreshCw, Loader2, Plus, Trash2, 
+import {
     AlignLeft, AlignCenter, AlignRight,
     ArrowUpLeft, ArrowUp, ArrowUpRight, ArrowLeft, Grip, ArrowRight, ArrowDownLeft, ArrowDown, ArrowDownRight,
-    Paintbrush, Blend, Upload, Waves
+    Paintbrush, Blend, Type, Sparkles, Loader2, Plus, Trash2
 } from 'lucide-react';
 import { TextElement, Font, Animation, Shadow, TextFill, Position, OuterGlow, Extrude, Curve, FileUploadRecord, FilePurpose } from '../../types';
 import { apiRequest } from '../../config/api';
@@ -78,7 +77,7 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
     formData.append('file', file);
     formData.append('purpose', FilePurpose.TEXTURE_IMAGE);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/files/upload`, { method: 'POST', body: formData });
+      const response = await fetch('/api/v1/files/upload', { method: 'POST', body: formData });
       if (response.ok) await fetchTextureFiles();
       else alert('Falha no upload da textura.');
     } catch (error) { console.error('Erro no upload:', error); }
@@ -103,25 +102,77 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
   };
 
   const generatePreview = async () => {
-    if (!textElement.text) { 
-      setPreviewImage(null); 
-      return; 
+    if (!textElement.text) {
+      setPreviewImage(null);
+      return;
     }
     setIsLoadingPreview(true);
     try {
-      const payload = { ...textElement, animation: null };
-      const data = await apiRequest('/api/v1/previews/text', { 
-          method: 'POST', 
-          body: JSON.stringify(payload) 
+      // Sanitiza campos numéricos para inteiros (Pydantic é rigoroso)
+      const payload: Record<string, any> = {
+        ...textElement,
+        font_size: Math.round(textElement.font_size),
+        border_width: Math.round(textElement.border_width),
+        stroke_width: Math.round(textElement.stroke_width),
+        background_padding: Math.round(textElement.background_padding),
+        background_border_radius: Math.round(textElement.background_border_radius),
+        margin_bottom: Math.round(textElement.margin_bottom),
+        max_width: textElement.max_width != null ? Math.round(textElement.max_width) : undefined,
+        line_height: textElement.line_height,
+        background_opacity: textElement.background_opacity,
+        fill: {
+          ...textElement.fill,
+          gradient_angle: Math.round(textElement.fill.gradient_angle),
+        },
+        animation: null,
+      };
+
+      // Sanitiza shadow se existir
+      if (textElement.shadow) {
+        payload.shadow = {
+          ...textElement.shadow,
+          offset_x: Math.round(textElement.shadow.offset_x),
+          offset_y: Math.round(textElement.shadow.offset_y),
+          blur_radius: Math.round(textElement.shadow.blur_radius),
+        };
+      } else {
+        payload.shadow = null;
+      }
+
+      // Sanitiza outer_glow se existir
+      if (textElement.outer_glow) {
+        payload.outer_glow = {
+          ...textElement.outer_glow,
+          radius: Math.round(textElement.outer_glow.radius),
+        };
+      }
+
+      // Sanitiza extrude se existir
+      if (textElement.extrude) {
+        payload.extrude = {
+          ...textElement.extrude,
+          depth: Math.round(textElement.extrude.depth),
+          direction_angle: textElement.extrude.direction_angle,
+        };
+      }
+
+      // Sanitiza curve se existir
+      if (textElement.curve) {
+        payload.curve = textElement.curve;
+      }
+
+      const data = await apiRequest('/api/v1/previews/text', {
+          method: 'POST',
+          body: JSON.stringify(payload)
       });
-      
+
       if (data && data.preview_image) {
         setPreviewImage(data.preview_image);
       }
-    } catch (error) { 
-      console.error('Erro ao gerar preview do texto:', error); 
-    } finally { 
-      setIsLoadingPreview(false); 
+    } catch (error) {
+      console.error('Erro ao gerar preview do texto:', error);
+    } finally {
+      setIsLoadingPreview(false);
     }
   };
 
@@ -130,6 +181,13 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
       { pos: { x: 'left', y: 'center' }, icon: ArrowLeft }, { pos: { x: 'center', y: 'center' }, icon: Grip }, { pos: { x: 'right', y: 'center' }, icon: ArrowRight },
       { pos: { x: 'left', y: 'bottom' }, icon: ArrowDownLeft }, { pos: { x: 'center', y: 'bottom' }, icon: ArrowDown }, { pos: { x: 'right', y: 'bottom' }, icon: ArrowDownRight },
   ];
+
+  const isManualPosition = typeof textElement.position.x === 'number' || typeof textElement.position.y === 'number';
+
+  const handleManualPositionChange = (axis: 'x' | 'y', value: number) => {
+    const newPos = { ...textElement.position, [axis]: value };
+    handleChange({ position: newPos });
+  };
 
   const firstAutoIndex = sceneTextElements.findIndex(el => el.position.y === 'auto');
   const isFirstAutoElement = elementIndex === firstAutoIndex;
@@ -192,6 +250,21 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
                         <label className="block text-sm font-medium text-slate-700 mb-2">Altura da Linha ({textElement.line_height})</label>
                          <input type="range" min="0.8" max="3" step="0.1" value={textElement.line_height} onChange={(e) => handleChange({ line_height: parseFloat(e.target.value) })} className="w-full"/>
                     </div>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Largura Máxima ({textElement.max_width || 'Automático'})
+                    </label>
+                    <input
+                        type="range"
+                        min="100"
+                        max="1920"
+                        step="10"
+                        value={textElement.max_width || 1080}
+                        onChange={(e) => handleChange({ max_width: e.target.value === '' ? null : parseInt(e.target.value) })}
+                        className="w-full"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Defina a largura máxima do texto. Deixe em automático para usar a largura total da cena.</p>
                 </div>
             </div>
         </details>
@@ -274,13 +347,65 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
              <div className="p-4 border-t border-slate-100 space-y-6">
                 <div>
                     <h4 className="font-medium text-slate-800 mb-3">Posicionamento</h4>
-                     <div className="p-2 bg-slate-100 rounded-lg border border-slate-200 grid grid-cols-3 gap-1">
-                        {positionPresets.map(({ pos, icon: Icon }) => (
-                             <button key={`${pos.x}-${pos.y}`} onClick={() => handleChange({ position: pos })} className={`p-2 rounded-md transition-colors ${textElement.position.x === pos.x && textElement.position.y === pos.y ? 'bg-blue-500 text-white' : 'hover:bg-slate-200'}`}>
-                                <Icon size={18} className="mx-auto"/>
-                            </button>
-                        ))}
+
+                    {/* Toggle: Preset vs Manual */}
+                    <div className="flex items-center gap-2 mb-3">
+                        <button
+                            onClick={() => handleChange({ position: { x: 'center', y: 'center' } })}
+                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${!isManualPosition ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            Grade 3×3
+                        </button>
+                        <button
+                            onClick={() => handleChange({ position: { x: 0, y: 0 } })}
+                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${isManualPosition ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            Manual (px)
+                        </button>
                     </div>
+
+                    {/* Preset Grid */}
+                    {!isManualPosition && (
+                        <div className="p-2 bg-slate-100 rounded-lg border border-slate-200 grid grid-cols-3 gap-1">
+                            {positionPresets.map(({ pos, icon: Icon }) => (
+                                <button key={`${pos.x}-${pos.y}`} onClick={() => handleChange({ position: pos })} className={`p-2 rounded-md transition-colors ${textElement.position.x === pos.x && textElement.position.y === pos.y ? 'bg-blue-500 text-white' : 'hover:bg-slate-200'}`}>
+                                    <Icon size={18} className="mx-auto"/>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Manual X/Y Inputs */}
+                    {isManualPosition && (
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Posição X (px)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={typeof textElement.position.x === 'number' ? textElement.position.x : 0}
+                                    onChange={(e) => handleManualPositionChange('x', parseInt(e.target.value) || 0)}
+                                    className="w-full p-2 border border-slate-300 rounded-lg font-mono"
+                                    placeholder="0"
+                                />
+                                <p className="text-xs text-slate-500 mt-1">0 = borda esquerda</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    Posição Y (px)
+                                </label>
+                                <input
+                                    type="number"
+                                    value={typeof textElement.position.y === 'number' ? textElement.position.y : 0}
+                                    onChange={(e) => handleManualPositionChange('y', parseInt(e.target.value) || 0)}
+                                    className="w-full p-2 border border-slate-300 rounded-lg font-mono"
+                                    placeholder="0"
+                                />
+                                <p className="text-xs text-slate-500 mt-1">0 = topo da cena</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 {isFirstAutoElement && textElement.position.y === 'auto' && (
                   <div>

@@ -1,7 +1,7 @@
 // File: src/components/VideoEditor/SceneAudioEditor.tsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Music, MessageSquare, Speaker, Plus, Trash2, Upload } from 'lucide-react';
+import { Music, Speaker, Plus, Trash2, Upload } from 'lucide-react';
 import { Scene, FileUploadRecord, AudioTrack, FilePurpose } from '../../types';
 import { apiRequest } from '../../config/api';
 import AudioPreview from './AudioPreview';

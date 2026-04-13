@@ -1,9 +1,10 @@
 // File: src/components/ImageEditor/ImagePreview.tsx
 // Substitua o conteúdo completo deste arquivo.
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Loader2, Eye, RefreshCw, X } from 'lucide-react';
-import { ImageConfig, VideoTemplate, Scene } from '../../types';
+import { ImageConfig, Scene } from '../../types';
+import { VIDEO_TEMPLATES } from '../../config/templates';
 import { apiRequest } from '../../config/api';
 
 interface ImagePreviewProps {
@@ -16,13 +17,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ config, isGenerating }) => 
   const [isPreviewGenerating, setIsPreviewGenerating] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const templates = useMemo((): Record<string, VideoTemplate> => ({
-    instagram_story: { name: 'instagram_story', width: 1080, height: 1920, fps: 24, aspectRatio: '9/16', description: 'Instagram Story' },
-    instagram_feed: { name: 'instagram_feed', width: 1080, height: 1350, fps: 24, aspectRatio: '4/5', description: 'Instagram Feed' },
-    youtube_thumbnail: { name: 'youtube_thumbnail', width: 1280, height: 720, fps: 24, aspectRatio: '16/9', description: 'YouTube' },
-  }), []);
-
-  const currentTemplate = templates[config.template] || templates['instagram_story'];
+  const currentTemplate = VIDEO_TEMPLATES[config.template] || VIDEO_TEMPLATES['instagram_story'];
 
   const generateServerPreview = async () => {
     setIsPreviewGenerating(true);
@@ -60,8 +55,8 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ config, isGenerating }) => 
   }, [config, isGenerating]);
 
   return (
-    // CORREÇÃO: O contêiner principal tem a classe 'sticky' para acompanhar a rolagem.
-    <div className="sticky top-6 bg-white rounded-xl border border-slate-200 p-4 space-y-4 max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
+    // Sticky container — SEM overflow para não quebrar o comportamento sticky
+    <div className="sticky top-6 bg-white rounded-xl border border-slate-200 p-4 space-y-4 flex flex-col">
        <div className="flex items-center justify-between flex-shrink-0">
         <h3 className="font-semibold text-slate-900 flex items-center gap-2"><Eye className="w-5 h-5 text-indigo-600" />Preview da Imagem</h3>
         <button onClick={generateServerPreview} disabled={isGenerating || isPreviewGenerating} className="flex items-center gap-2 px-3 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 text-sm">
@@ -69,8 +64,8 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ config, isGenerating }) => 
           Atualizar
         </button>
       </div>
-      <div 
-        className="relative w-full bg-slate-200 rounded-lg overflow-hidden shadow-inner flex items-center justify-center flex-1" 
+      <div
+        className="relative w-full bg-slate-200 rounded-lg overflow-hidden shadow-inner flex items-center justify-center"
         style={{ aspectRatio: `${currentTemplate.width} / ${currentTemplate.height}` }}
       >
         {(isGenerating || isPreviewGenerating) && (

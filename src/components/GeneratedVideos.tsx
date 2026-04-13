@@ -223,12 +223,12 @@ const GeneratedVideos: React.FC = () => {
                       onClick={() => setSelectedTaskId(task.id)}
                     >
                       <div className="aspect-video bg-slate-100 flex items-center justify-center rounded-t-xl overflow-hidden">
-                        <video 
-                          src={task.download_url!} 
-                          className="w-full h-full object-cover" 
-                          muted 
+                        <video
+                          src={task.download_url!}
+                          className="w-full h-full object-cover"
+                          muted
                           loop
-                          onMouseOver={e => (e.target as HTMLVideoElement).play()}
+                          onMouseOver={e => (e.target as HTMLVideoElement).play().catch(() => {})}
                           onMouseOut={e => (e.target as HTMLVideoElement).pause()}
                           />
                       </div>
