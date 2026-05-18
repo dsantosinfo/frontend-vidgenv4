@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Music, Speaker, Plus, Trash2, Upload } from 'lucide-react';
 import { Scene, FileUploadRecord, AudioTrack, FilePurpose } from '../../types';
-import { apiRequest } from '../../config/api';
+import { apiRequest, uploadFile } from '../../config/api';
 import AudioPreview from './AudioPreview';
 
 interface SceneAudioEditorProps {
@@ -36,27 +36,12 @@ const SceneAudioEditor: React.FC<SceneAudioEditorProps> = ({ scene, onUpdateScen
   // Função de upload genérica que aceita a finalidade como argumento
   const handleFileUpload = async (file: File, purpose: FilePurpose) => {
     if (!file) return;
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('purpose', purpose);
-
     try {
-      const response = await fetch('/api/v1/files/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        await fetchAudioFiles(); // Atualiza a lista para todos os componentes
-      } else {
-        const errorData = await response.json();
-        alert(`Falha no upload: ${errorData.detail || 'Erro desconhecido'}`);
-      }
+      await uploadFile(file, purpose);
+      await fetchAudioFiles();
     } catch (err: any) {
-      console.error('Erro no upload:', err);
-      alert('Ocorreu um erro de rede durante o upload.');
+      alert(`Falha no upload: ${err.message}`);
     } finally {
       setIsUploading(false);
     }

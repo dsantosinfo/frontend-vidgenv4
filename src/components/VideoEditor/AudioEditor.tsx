@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Music, Volume2 } from 'lucide-react';
 // Importa os tipos corretos e padronizados
 import { Musica, FileUploadRecord, FilePurpose } from '../../types';
-import { apiRequest } from '../../config/api';
+import { apiRequest, uploadFile } from '../../config/api';
 import AudioPreview from './AudioPreview';
 
 // Define a interface das props do componente
@@ -43,31 +43,13 @@ const AudioEditor: React.FC<AudioEditorProps> = ({ musicaConfig, onMusicaChange 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('purpose', FilePurpose.MUSIC);
-
     try {
-      const response = await fetch('/api/v1/files/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        await fetchAudioFiles();
-        // Limpa o input para permitir o re-upload do mesmo arquivo
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      } else {
-         const errorData = await response.json();
-         alert(`Erro no upload: ${errorData.detail || 'Erro desconhecido'}`);
-      }
-    } catch (err: any) { // Usa 'err: any' para máxima compatibilidade
-      console.error('Erro no upload:', err);
-      alert('Ocorreu um erro de rede durante o upload.');
+      await uploadFile(file, FilePurpose.MUSIC);
+      await fetchAudioFiles();
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err: any) {
+      alert(`Erro no upload: ${err.message}`);
     } finally {
       setIsUploading(false);
     }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Trash2, RefreshCw, Image, Video, Music, Eye } from 'lucide-react';
 import { FileUploadRecord, FilePurpose } from '../types';
-import { apiRequest } from '../config/api';
+import { apiRequest, uploadFile } from '../config/api';
 import AudioPreview from './VideoEditor/AudioPreview';
 import VideoPreview from './VideoEditor/VideoPreview';
 
@@ -49,31 +49,11 @@ const FileManagement: React.FC = () => {
 
   const handleFileUpload = async (file: File) => {
     setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('purpose', uploadPurpose);
-
     try {
-      const response = await fetch('/api/v1/files/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        await fetchFiles();
-      } else {
-        let errorMessage = 'Erro desconhecido';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorMessage;
-        } catch {
-          // Resposta sem corpo JSON — usa status text
-          errorMessage = response.statusText || errorMessage;
-        }
-        alert(`Falha no upload: ${errorMessage}`);
-        console.error('Falha no upload:', errorMessage);
-      }
-    } catch (error) {
+      await uploadFile(file, uploadPurpose);
+      await fetchFiles();
+    } catch (error: any) {
+      alert(`Falha no upload: ${error.message || 'Erro desconhecido'}`);
       console.error('Erro no upload:', error);
     } finally {
       setUploading(false);

@@ -1,9 +1,5 @@
 import { VideoTemplate } from '../types';
 
-/**
- * Templates de vídeo disponíveis no sistema.
- * Definidos aqui para evitar duplicação em múltiplos componentes.
- */
 export const VIDEO_TEMPLATES: Record<string, VideoTemplate> = {
   instagram_story: { name: 'instagram_story', width: 1080, height: 1920, fps: 24, aspectRatio: '9/16', description: 'Instagram Story' },
   instagram_feed: { name: 'instagram_feed', width: 1080, height: 1350, fps: 24, aspectRatio: '4/5', description: 'Instagram Feed' },
@@ -12,3 +8,6 @@ export const VIDEO_TEMPLATES: Record<string, VideoTemplate> = {
   tiktok: { name: 'tiktok', width: 1080, height: 1920, fps: 24, aspectRatio: '9/16', description: 'TikTok' },
   custom: { name: 'custom', width: 1920, height: 1080, fps: 24, aspectRatio: '16/9', description: 'Custom' },
 };
+
+export const getTemplateWidth = (template: string): number =>
+  VIDEO_TEMPLATES[template]?.width ?? 1080;

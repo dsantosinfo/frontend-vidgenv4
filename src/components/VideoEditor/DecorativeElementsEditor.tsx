@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Trash2, Settings, Plus, Move, Percent, Eye, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { DecorativeElement, FileUploadRecord, VideoConfig, ImageConfig, FilePurpose } from '../../types';
-import { apiRequest } from '../../config/api';
+import { apiRequest, uploadFile } from '../../config/api';
 import ScenePreview from './ScenePreview';
 
 // CORREÇÃO: A prop 'config' agora pode ser VideoConfig ou ImageConfig
@@ -55,23 +55,13 @@ const DecorativeElementsEditor: React.FC<DecorativeElementsEditorProps> = ({
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('purpose', FilePurpose.DECORATIVE_ELEMENT);
-
     try {
-      const response = await fetch('/api/v1/files/upload', { method: 'POST', body: formData });
-      if (response.ok) {
-        await fetchImageFiles();
-      } else {
-        const errorData = await response.json();
-        alert(`Falha no upload da imagem: ${errorData.detail || 'Erro desconhecido'}`);
-      }
-    } catch (error) {
-      console.error('Erro no upload:', error);
+      await uploadFile(file, FilePurpose.DECORATIVE_ELEMENT);
+      await fetchImageFiles();
+    } catch (error: any) {
+      alert(`Falha no upload: ${error.message}`);
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const addDecorativeElement = (file: FileUploadRecord) => {

@@ -187,4 +187,83 @@ export interface TaskInfo {
   download_url?: string | null;
   error?: string | null;
   request_config?: any;
+  user_id?: string | null;
+}
+
+// --- Auth ---
+
+export type UserRole = 'owner' | 'superadmin' | 'user';
+
+export interface UserResponse {
+  id: string;
+  email: string;
+  full_name?: string | null;
+  phone?: string | null;
+  role: UserRole;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export interface AuthState {
+  user: UserResponse | null;
+  token: string | null;
+  isAuthenticated: boolean;
+}
+
+// --- User Templates ---
+
+export interface UserTemplateResponse {
+  id: string;
+  user_id: string;
+  name: string;
+  config: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserTemplateCreate {
+  name: string;
+  config: Record<string, any>;
+}
+
+export interface UserTemplateUpdate {
+  name?: string | null;
+  config?: Record<string, any> | null;
+}
+
+// --- Simplified Generation ---
+
+export interface SimplifiedVideoRequest {
+  template_id: string;
+  content_type: 'video' | 'image';
+  overrides?: Record<string, any> | null;
+}
+
+// --- Palette Extractor ---
+
+export interface PaletteColorItem {
+  hex: string;
+  rgb: [number, number, number];
+  percentage: number;
+}
+
+export interface PaletteExtractionMetadata {
+  source_filename: string;
+  palette_type: 'full' | 'simplified';
+  algorithm: string;
+  requested_color_count: number;
+  final_color_count: number;
+  min_percent_filter: number;
+  color_similarity_tolerance: number;
+  processing_time_seconds: number;
+}
+
+export interface PaletteExtractionResponse {
+  palette: PaletteColorItem[] | string[];
+  metadata: PaletteExtractionMetadata;
 }

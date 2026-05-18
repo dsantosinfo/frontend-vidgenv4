@@ -64,7 +64,7 @@ const ScenePreview: React.FC<ScenePreviewProps> = ({
   useEffect(() => {
     const handler = setTimeout(() => {
       generateServerPreview();
-    }, 1200);
+    }, 600);
     return () => clearTimeout(handler);
   }, [scene, template, decorativeElements]);
 

@@ -2,7 +2,7 @@
 // Substitua o conteúdo completo deste arquivo.
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Copy, Music, ArrowRight, Clock, Type, Palette, AudioLines, Film, MessageSquare } from 'lucide-react';
+import { Plus, Trash2, Copy, Music, ArrowRight, Clock, Type, Palette, AudioLines, Film, MessageSquare, ArrowUp, ArrowDown } from 'lucide-react';
 import { Scene, TextElement, Transition, VideoConfig } from '../../types';
 import { apiRequest } from '../../config/api';
 import TextElementEditor from './TextElementEditor';
@@ -73,6 +73,15 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ config, onConfigChange }) => 
     onScenesChange(newScenes);
   };
   
+  const moveScene = (index: number, direction: 'up' | 'down') => {
+    const newScenes = [...scenes];
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= newScenes.length) return;
+    [newScenes[index], newScenes[target]] = [newScenes[target], newScenes[index]];
+    onScenesChange(newScenes);
+    setActiveSceneIndex(target);
+  };
+
   const activeScene = scenes[activeSceneIndex];
 
   if (!activeScene) {
@@ -109,6 +118,8 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ config, onConfigChange }) => 
                          <span className="truncate">Cena {index + 1}</span>
                        </div>
                        <div className="flex gap-1">
+                         <button onClick={(e) => { e.stopPropagation(); moveScene(index, 'up'); }} disabled={index === 0} className="p-1 text-slate-400 hover:text-blue-500 disabled:opacity-30" title="Mover para cima"><ArrowUp className="w-3 h-3" /></button>
+                         <button onClick={(e) => { e.stopPropagation(); moveScene(index, 'down'); }} disabled={index === scenes.length - 1} className="p-1 text-slate-400 hover:text-blue-500 disabled:opacity-30" title="Mover para baixo"><ArrowDown className="w-3 h-3" /></button>
                          <button onClick={(e) => { e.stopPropagation(); duplicateScene(index); }} className="p-1 text-slate-400 hover:text-blue-500" title="Duplicar"><Copy className="w-3 h-3" /></button>
                          {scenes.length > 1 && <button onClick={(e) => { e.stopPropagation(); deleteScene(index); }} className="p-1 text-slate-400 hover:text-red-500" title="Excluir"><Trash2 className="w-3 h-3" /></button>}
                        </div>
@@ -200,6 +211,7 @@ const SceneEditor: React.FC<SceneEditorProps> = ({ config, onConfigChange }) => 
                                     textElement={textElement}
                                     elementIndex={textIndex}
                                     sceneTextElements={activeScene.text_elements}
+                                    template={template}
                                     onTextElementChange={(updatedTextElement) => {
                                         const newTextElements = [...activeScene.text_elements];
                                         newTextElements[textIndex] = updatedTextElement;

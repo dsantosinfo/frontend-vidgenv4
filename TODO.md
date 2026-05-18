@@ -1,132 +1,43 @@
-# 📋 Auditoria do TextElementEditor vs API
+# TODO — Atualização para nova API VidGen
 
-## Resultado: ✅ TOTALMENTE ALINHADO
-
-O componente `TextElementEditor` foi auditado contra o schema `TextPreviewRequest` da API OpenAPI e está **100% alinhado**, incluindo suporte a posicionamento manual em pixels.
-
----
-
-## Campos do Schema API vs Frontend
-
-### ✅ Campos Presentes e Corretos
-
-| Campo API | Tipo API | Frontend | UI | Status |
-|-----------|----------|----------|-----|--------|
-| `text` | string | ✅ | Textarea | ✅ OK |
-| `font_size` | integer | ✅ | Range 10-200px | ✅ OK |
-| `fill` | TextFill | ✅ | Seletor (sólido/gradiente/textura) | ✅ OK |
-| `font` | string\|null | ✅ | Select (fontes sistema + custom) | ✅ OK |
-| `background_color` | string\|null | ✅ | Color picker | ✅ OK |
-| `background_opacity` | number | ✅ | Range 0-1 | ✅ OK |
-| `alignment` | string | ✅ | Toggle buttons (left/center/right) | ✅ OK |
-| `max_width` | integer | ✅ | Range 100-1920px | ✅ OK |
-| `border_color` | string\|null | ✅ | ⚠️ Existe no type, sem controle UI |
-| `border_width` | integer | ✅ | Number input | ✅ OK |
-| `stroke_color` | string\|null | ✅ | Color picker | ✅ OK |
-| `stroke_width` | integer | ✅ | Number input | ✅ OK |
-| `line_height` | number | ✅ | Range 0.8-3 | ✅ OK |
-| `background_padding` | integer | ✅ | Range 0-100 | ✅ OK |
-| `background_border_radius` | integer | ✅ | Range 0-100 | ✅ OK |
-| `shadow` | Shadow\|null | ✅ | Toggle + 5 controles | ✅ OK |
-| `animation` | Animation\|null | ✅ | Select (fetch da API) | ✅ OK |
-| `outer_glow` | OuterGlow\|null | ✅ | Toggle + 3 controles | ✅ OK |
-| `extrude` | Extrude\|null | ✅ | Toggle + 3 controles | ✅ OK |
-| `curve` | Curve\|null | ✅ | Toggle + 2 controles | ✅ OK |
-| `position.x` | string\|integer | ✅ | **Grade 3×3 OU Manual (px)** | ✅ OK |
-| `position.y` | string\|integer\|'auto' | ✅ | **Grade 3×3 OU Manual (px)** | ✅ OK |
+## Status Legend
+- [ ] Pendente
+- [x] Concluído
 
 ---
 
-## 🔍 Descoberta desta Auditoria: Posicionamento Manual em Pixels
+## Análise EDITOR_TEMPLATES.md vs. Editor Atual
 
-### Schema da API (`TextPosition`)
+### Checklist do documento
 
-```json
-{
-  "x": "center",  // string (preset) OU integer (px)
-  "y": "center"   // string (preset) OU integer (px) OU "auto"
-}
-```
-
-A API **sempre suportou** valores numéricos (pixels) para `x` e `y`. O frontend anterior **só expunha presets** via grade 3×3.
-
-### Correção Aplicada
-
-- **Toggle** na UI: "Grade 3×3" ↔ "Manual (px)"
-- **Modo Grade**: 9 presets (left/center/right × top/center/bottom)
-- **Modo Manual**: Inputs numéricos para X e Y em pixels
-  - `X = 0` → borda esquerda
-  - `Y = 0` → topo da cena
-
-### Alterações no Código
-
-| Arquivo | Mudança |
-|---------|---------|
-| `TextElementEditor.tsx` | Adicionado toggle preset/manual + inputs X/Y |
-| `TextElementEditor.tsx` | `isManualPosition` detecta se posição é numérica |
-| `TextElementEditor.tsx` | `handleManualPositionChange` atualiza eixo individualmente |
+- [x] Estado central espelhando `VideoConfig`
+- [x] Seletor de template com atualização do canvas
+- [x] Upload de assets com `new_filename`
+- [x] Editor de fundo por cena (cor, imagem, vídeo)
+- [x] Editor de `TextElement` com todos os campos
+- [x] Preview de texto via `/previews/text` — debounce corrigido para **400ms**
+- [x] Preview de cena via `/previews/scene` — debounce corrigido para **600ms**
+- [x] `max_width` no preview de texto baseado na largura real do template (`getTemplateWidth`)
+- [x] Seletor visual de posição (grid 3×3 + coordenadas numéricas)
+- [x] Efeitos de texto (shadow, glow, extrude, curve)
+- [x] Seletor de animação por texto
+- [x] Gerenciador de cenas (adicionar, remover, duplicar)
+- [x] **Reordenação de cenas** (botões ↑↓ na lista lateral) — **NOVO**
+- [x] Seletor de transição entre cenas
+- [x] Elementos decorativos globais
+- [x] Trilha sonora global
+- [x] Modal "Salvar como Template" com campo de nome
+- [x] **Botão "Atualizar Template"** (PUT quando template já foi salvo) — **NOVO**
+- [x] Salvar template **sem text_elements**
+- [x] Botão "Gerar Vídeo" com polling de status
+- [x] Download ao completar
 
 ---
 
-## Sub-schemas Validados
+## Outros recursos implementados
 
-### TextFill ✅
-| Campo | Tipo API | Frontend | UI |
-|-------|----------|----------|-----|
-| `type` | 'solid'\|'gradient'\|'texture' | ✅ | Select |
-| `color` | string | ✅ | Color picker |
-| `gradient_colors` | [string] | ✅ | Multi pickers + add/remove |
-| `gradient_angle` | integer | ✅ | Range 0-360° |
-| `image_path` | string\|null | ✅ | Select de texturas |
-
-### Shadow ✅
-| Campo | Tipo API | Frontend | UI Range |
-|-------|----------|----------|----------|
-| `color` | string | ✅ | Color picker |
-| `offset_x` | integer | ✅ | -20 a 20 |
-| `offset_y` | integer | ✅ | -20 a 20 |
-| `opacity` | number | ✅ | 0-1 |
-| `blur_radius` | integer | ✅ | 0-50 |
-
-### OuterGlow ✅
-| Campo | Tipo API | Frontend | UI Range |
-|-------|----------|----------|----------|
-| `color` | string | ✅ | Color picker |
-| `radius` | integer | ✅ | 0-50 |
-| `opacity` | number | ✅ | 0-1 |
-
-### Extrude ✅
-| Campo | Tipo API | Frontend | UI Range |
-|-------|----------|----------|----------|
-| `depth` | integer | ✅ | 1-20 |
-| `color` | string | ✅ | Color picker |
-| `direction_angle` | number | ✅ | 0-360° |
-
-### Curve ✅
-| Campo | Tipo API | Frontend | UI |
-|-------|----------|----------|-----|
-| `radius` | number | ✅ | Range |
-| `direction` | 'up'\|'down' | ✅ | Select |
-
----
-
-## ⚠️ Observações
-
-### `border_color` sem controle de UI
-O campo `border_color` existe no type `TextElement` mas **não possui controle visual** no editor. O valor padrão é `null`. Se necessário, adicionar um color picker na seção "Fundo do Texto".
-
-### `margin_bottom`
-Campo usado para espaçamento entre elementos de texto. Não exposto na UI mas presente no type.
-
----
-
-## Resumo
-
-| Métrica | Valor |
-|---------|-------|
-| Campos da API cobertos | **21/21** ✅ |
-| Campos adicionados nesta auditoria | **2** (`max_width`, posicionamento manual px) |
-| Campos extras (Scene-only) | 3 (`vertical_offset`, `margin_bottom`, `position` com 'auto') |
-| Campos faltando | **0** ✅ |
-| Erros TypeScript | **0** ✅ |
-| Build | ✅ **Sucesso** |
+- [x] Autenticação JWT (login/register/logout)
+- [x] Gestão de usuários (admin)
+- [x] User Templates (CRUD + simplified generation)
+- [x] Palette Extractor integrado no BackgroundEditor e TextElementEditor
+- [x] `getTemplateWidth` exportado de `templates.ts`

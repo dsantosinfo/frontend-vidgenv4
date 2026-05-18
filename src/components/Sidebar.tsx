@@ -9,10 +9,12 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  Image as ImageIcon // Novo ícone
+  Image as ImageIcon,
+  LayoutTemplate,
+  Users
 } from 'lucide-react';
 
-type ViewType = 'editor' | 'imageEditor' | 'videos' | 'files';
+type ViewType = 'editor' | 'imageEditor' | 'videos' | 'files' | 'templates' | 'users';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -42,6 +44,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       description: 'Criar imagens estáticas'
     },
     {
+      id: 'templates' as const,
+      icon: LayoutTemplate,
+      label: 'Meus Templates',
+      description: 'Templates salvos'
+    },
+    {
       id: 'videos' as const,
       icon: Files,
       label: 'Vídeos Gerados',
@@ -52,6 +60,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: FolderOpen,
       label: 'Gerenciar Arquivos',
       description: 'Gerenciar recursos'
+    },
+    {
+      id: 'users' as const,
+      icon: Users,
+      label: 'Usuários',
+      description: 'Gestão de contas'
     }
   ];
 

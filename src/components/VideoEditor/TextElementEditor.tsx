@@ -5,23 +5,48 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     AlignLeft, AlignCenter, AlignRight,
     ArrowUpLeft, ArrowUp, ArrowUpRight, ArrowLeft, Grip, ArrowRight, ArrowDownLeft, ArrowDown, ArrowDownRight,
-    Paintbrush, Blend, Type, Sparkles, Loader2, Plus, Trash2
+    Paintbrush, Blend, Type, Sparkles, Loader2, Plus, Trash2, Palette, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { TextElement, Font, Animation, Shadow, TextFill, Position, OuterGlow, Extrude, Curve, FileUploadRecord, FilePurpose } from '../../types';
-import { apiRequest } from '../../config/api';
+import { apiRequest, uploadFile } from '../../config/api';
+import { getTemplateWidth } from '../../config/templates';
+import PaletteExtractor from '../PaletteExtractor';
+
+const PaletteSection: React.FC<{ onColorSelect: (hex: string) => void }> = ({ onColorSelect }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 text-xs text-purple-600 hover:text-purple-800 transition-colors"
+      >
+        <Palette className="w-3.5 h-3.5" />
+        Extrair paleta
+        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+      {open && (
+        <div className="mt-2 p-3 bg-white border border-slate-200 rounded-lg">
+          <PaletteExtractor onColorSelect={(hex) => { onColorSelect(hex); setOpen(false); }} />
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface TextElementEditorProps {
   textElement: TextElement;
   onTextElementChange: (textElement: TextElement) => void;
   elementIndex: number;
   sceneTextElements: TextElement[];
+  template?: string;
 }
 
 const TextElementEditor: React.FC<TextElementEditorProps> = ({
   textElement,
   onTextElementChange,
   elementIndex,
-  sceneTextElements
+  sceneTextElements,
+  template = 'instagram_story'
 }) => {
   const [fonts, setFonts] = useState<Font[]>([]);
   const [animations, setAnimations] = useState<Animation[]>([]);
@@ -39,9 +64,9 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
   useEffect(() => {
     const handler = setTimeout(() => {
       generatePreview();
-    }, 700);
+    }, 400);
     return () => clearTimeout(handler);
-  }, [textElement]);
+  }, [textElement, template]);
 
   const fetchFonts = async () => {
     try {
@@ -73,14 +98,12 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
   const handleTextureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('purpose', FilePurpose.TEXTURE_IMAGE);
     try {
-      const response = await fetch('/api/v1/files/upload', { method: 'POST', body: formData });
-      if (response.ok) await fetchTextureFiles();
-      else alert('Falha no upload da textura.');
-    } catch (error) { console.error('Erro no upload:', error); }
+      await uploadFile(file, FilePurpose.TEXTURE_IMAGE);
+      await fetchTextureFiles();
+    } catch (error: any) {
+      alert(`Falha no upload da textura: ${error.message}`);
+    }
   };
 
   const handleChange = (updates: Partial<TextElement>) => onTextElementChange({ ...textElement, ...updates });
@@ -117,7 +140,10 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
         background_padding: Math.round(textElement.background_padding),
         background_border_radius: Math.round(textElement.background_border_radius),
         margin_bottom: Math.round(textElement.margin_bottom),
-        max_width: textElement.max_width != null ? Math.round(textElement.max_width) : undefined,
+        // max_width baseado na largura real do template (conforme EDITOR_TEMPLATES.md)
+        max_width: textElement.max_width != null
+          ? Math.round(textElement.max_width)
+          : getTemplateWidth(template),
         line_height: textElement.line_height,
         background_opacity: textElement.background_opacity,
         fill: {
@@ -288,6 +314,7 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Cor</label>
                                 <input type="color" value={textElement.fill.color} onChange={(e) => handleFillChange({ color: e.target.value })} className="p-1 h-10 w-full block bg-white border border-slate-300 rounded-md cursor-pointer"/>
+                                <PaletteSection onColorSelect={(hex) => handleFillChange({ color: hex })} />
                             </div>
                         )}
                         {textElement.fill.type === 'gradient' && (

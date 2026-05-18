@@ -1,14 +1,36 @@
 // File: src/components/VideoEditor/BackgroundEditor.tsx
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Image, Video, Palette } from 'lucide-react';
+import { Upload, Image, Video, Palette, ChevronDown, ChevronUp } from 'lucide-react';
 import { Background, FileUploadRecord, FilePurpose } from '../../types';
-import { apiRequest } from '../../config/api';
+import { apiRequest, uploadFile } from '../../config/api';
+import PaletteExtractor from '../PaletteExtractor';
 
 interface BackgroundEditorProps {
   background: Background;
   onBackgroundChange: (background: Background) => void;
 }
+
+const PaletteSection: React.FC<{ onColorSelect: (hex: string) => void }> = ({ onColorSelect }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+      >
+        <Palette className="w-4 h-4" />
+        Extrair paleta de imagem
+        {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+      {open && (
+        <div className="mt-3 p-3 bg-white border border-slate-200 rounded-lg">
+          <PaletteExtractor onColorSelect={onColorSelect} />
+        </div>
+      )}
+    </div>
+  );
+};
 
 const BackgroundEditor: React.FC<BackgroundEditorProps> = ({
   background,
@@ -42,30 +64,16 @@ const BackgroundEditor: React.FC<BackgroundEditorProps> = ({
   const handleFileUpload = async (file: File) => {
     if (!file) return;
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    // Define a finalidade com base no tipo de arquivo
-    const purpose = file.type.startsWith('image/') 
-      ? FilePurpose.BACKGROUND_IMAGE 
+    const purpose = file.type.startsWith('image/')
+      ? FilePurpose.BACKGROUND_IMAGE
       : FilePurpose.BACKGROUND_VIDEO;
-    formData.append('purpose', purpose);
-
     try {
-      const response = await fetch('/api/v1/files/upload', {
-        method: 'POST', body: formData,
-      });
-
-      if (response.ok) {
-        await fetchFiles();
-      } else {
-        const errorData = await response.json();
-        alert(`Erro no upload: ${errorData.detail || 'Erro desconhecido'}`);
-      }
-    } catch (error) {
-      console.error('Erro no upload:', error);
+      await uploadFile(file, purpose);
+      await fetchFiles();
+    } catch (error: any) {
+      alert(`Erro no upload: ${error.message}`);
     } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) fileInputRef.current.value = '';
       setIsUploading(false);
     }
   };
@@ -111,8 +119,8 @@ const BackgroundEditor: React.FC<BackgroundEditorProps> = ({
       </div>
 
       {background.type === 'color' && (
-        <div className="p-4 bg-slate-50 rounded-lg">
-          <label className="block text-sm font-medium text-slate-700 mb-2">Cor de Fundo</label>
+        <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+          <label className="block text-sm font-medium text-slate-700">Cor de Fundo</label>
           <div className="flex gap-2">
             <input 
               type="color" 
@@ -128,6 +136,7 @@ const BackgroundEditor: React.FC<BackgroundEditorProps> = ({
               placeholder="#000000" 
             />
           </div>
+          <PaletteSection onColorSelect={(hex) => onBackgroundChange({ ...background, color: hex })} />
         </div>
       )}
 

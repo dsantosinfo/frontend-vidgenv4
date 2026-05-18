@@ -1,9 +1,9 @@
 // File: src/components/VideoEditor/ConfigManager.tsx
 
 import React, { useRef, useState } from 'react';
-import { Download, Upload, FileText, AlertCircle, CheckCircle, ClipboardPaste } from 'lucide-react';
-import { VideoConfig } from '../../types';
-import { convertToApiPayload } from '../../config/api';
+import { Download, Upload, FileText, AlertCircle, CheckCircle, ClipboardPaste, LayoutTemplate, RefreshCw, FolderOpen, Trash2 } from 'lucide-react';
+import { VideoConfig, UserTemplateResponse } from '../../types';
+import { convertToApiPayload, createUserTemplate, updateUserTemplate, listUserTemplates, deleteUserTemplate } from '../../config/api';
 
 // Interface de propriedades para este componente
 interface ConfigManagerProps {
@@ -41,6 +41,21 @@ const cleanConfigForExport = (obj: any): any => {
   return newObj;
 };
 
+// Limpa text_elements de todas as cenas antes de salvar como template
+const stripTextElements = (payload: any): any => {
+  if (!payload?.config?.scenes) return payload;
+  return {
+    ...payload,
+    config: {
+      ...payload.config,
+      scenes: payload.config.scenes.map((scene: any) => ({
+        ...scene,
+        text_elements: [],
+      })),
+    },
+  };
+};
+
 const ConfigManager: React.FC<ConfigManagerProps> = ({ config, onConfigChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<{
@@ -48,6 +63,79 @@ const ConfigManager: React.FC<ConfigManagerProps> = ({ config, onConfigChange })
     message: string;
   }>({ type: null, message: '' });
   const [pastedJson, setPastedJson] = useState('');
+
+  const [templateName, setTemplateName] = useState('');
+  const [savedTemplateId, setSavedTemplateId] = useState<string | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  // --- Carregar templates ---
+  const [userTemplates, setUserTemplates] = useState<UserTemplateResponse[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [showTemplateList, setShowTemplateList] = useState(false);
+
+  const fetchUserTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const data = await listUserTemplates();
+      // Filtra apenas templates de vídeo (que têm scenes)
+      const unwrap = (c: any): any => c?.config ? unwrap(c.config) : c;
+      setUserTemplates((data as UserTemplateResponse[]).filter(t => !!unwrap(t.config)?.scenes));
+    } catch (e: any) {
+      setImportStatus({ type: 'error', message: e.message });
+      setTimeout(() => setImportStatus({ type: null, message: '' }), 3000);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const handleLoadTemplate = (template: UserTemplateResponse) => {
+    try {
+      const unwrap = (c: any): any => c?.config ? unwrap(c.config) : c;
+      const raw = unwrap(template.config);
+      processAndApplyConfig(raw);
+      setSavedTemplateId(template.id);
+      setTemplateName(template.name);
+      setShowTemplateList(false);
+      setImportStatus({ type: 'success', message: `Template "${template.name}" carregado!` });
+    } catch {
+      setImportStatus({ type: 'error', message: 'Falha ao carregar template.' });
+    } finally {
+      setTimeout(() => setImportStatus({ type: null, message: '' }), 3000);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string, name: string) => {
+    if (!confirm(`Deletar template "${name}"?`)) return;
+    try {
+      await deleteUserTemplate(id);
+      setUserTemplates(prev => prev.filter(t => t.id !== id));
+      if (savedTemplateId === id) { setSavedTemplateId(null); setTemplateName(''); }
+    } catch (e: any) {
+      setImportStatus({ type: 'error', message: e.message });
+      setTimeout(() => setImportStatus({ type: null, message: '' }), 3000);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) return;
+    setSavingTemplate(true);
+    try {
+      const payload = stripTextElements(convertToApiPayload(config));
+      if (savedTemplateId) {
+        await updateUserTemplate(savedTemplateId, { config: payload });
+        setImportStatus({ type: 'success', message: 'Template atualizado com sucesso!' });
+      } else {
+        const result = await createUserTemplate({ name: templateName.trim(), config: payload });
+        setSavedTemplateId(result.id);
+        setImportStatus({ type: 'success', message: 'Template salvo (sem textos) com sucesso!' });
+      }
+    } catch (e: any) {
+      setImportStatus({ type: 'error', message: e.message || 'Erro ao salvar template.' });
+    } finally {
+      setSavingTemplate(false);
+      setTimeout(() => setImportStatus({ type: null, message: '' }), 3000);
+    }
+  };
 
   const getConfigForExport = () => {
     const apiReadyConfig = convertToApiPayload(config);
@@ -203,6 +291,94 @@ const ConfigManager: React.FC<ConfigManagerProps> = ({ config, onConfigChange })
         </div>
       </div>
       
+      <div className="mt-6 border-t pt-6">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-medium text-slate-900">Carregar Template Salvo</h4>
+          <button
+            onClick={() => { setShowTemplateList(v => !v); if (!showTemplateList) fetchUserTemplates(); }}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
+          >
+            <FolderOpen className="w-4 h-4" />
+            {showTemplateList ? 'Fechar' : 'Ver Templates'}
+          </button>
+        </div>
+
+        {showTemplateList && (
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            {loadingTemplates ? (
+              <div className="p-4 text-center text-sm text-slate-500">
+                <RefreshCw className="w-4 h-4 animate-spin inline mr-2" />Carregando...
+              </div>
+            ) : userTemplates.length === 0 ? (
+              <p className="p-4 text-sm text-slate-500 text-center">Nenhum template de vídeo salvo.</p>
+            ) : (
+              <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                {userTemplates.map(t => (
+                  <div key={t.id} className={`flex items-center justify-between px-4 py-3 hover:bg-slate-50 ${
+                    savedTemplateId === t.id ? 'bg-indigo-50 border-l-2 border-indigo-500' : ''
+                  }`}>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{t.name}</p>
+                      <p className="text-xs text-slate-500">{new Date(t.created_at).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleLoadTemplate(t)}
+                        className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                      >
+                        Carregar
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTemplate(t.id, t.name)}
+                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                        title="Deletar"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 border-t pt-6">
+        <h4 className="font-medium text-slate-900 mb-3">Salvar como Template</h4>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={templateName}
+            onChange={e => setTemplateName(e.target.value)}
+            placeholder="Nome do template..."
+            disabled={!!savedTemplateId}
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+            onKeyDown={e => e.key === 'Enter' && handleSaveTemplate()}
+          />
+          <button
+            onClick={handleSaveTemplate}
+            disabled={!templateName.trim() || savingTemplate}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {savedTemplateId ? <RefreshCw className="w-4 h-4" /> : <LayoutTemplate className="w-4 h-4" />}
+            {savingTemplate ? 'Salvando...' : savedTemplateId ? 'Atualizar Template' : 'Salvar'}
+          </button>
+          {savedTemplateId && (
+            <button
+              onClick={() => { setSavedTemplateId(null); setTemplateName(''); }}
+              className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-300 rounded-lg"
+              title="Salvar como novo template"
+            >
+              Novo
+            </button>
+          )}
+        </div>
+        {savedTemplateId && (
+          <p className="text-xs text-green-600 mt-2">Template vinculado — clique em "Atualizar" para sincronizar as alterações.</p>
+        )}
+      </div>
+
       <div className="mt-6 border-t pt-6">
         <h4 className="font-medium text-slate-900 mb-3">Visualização do Payload da API (Para Debug)</h4>
         <div className="bg-slate-50 rounded-lg p-4 max-h-96 overflow-auto">

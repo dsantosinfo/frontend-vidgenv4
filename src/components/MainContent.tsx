@@ -1,15 +1,18 @@
-// File: src/components/MainContent.tsx
-// Substitua o conteúdo completo deste arquivo.
-
 import React from 'react';
 import VideoEditor from './VideoEditor';
-import ImageEditor from './ImageEditor/index.tsx'; // CORREÇÃO APLICADA AQUI
+import ImageEditor from './ImageEditor/index.tsx';
 import GeneratedVideos from './GeneratedVideos';
 import FileManagement from './FileManagement';
+import UserTemplatesManager from './UserTemplatesManager';
+import UserManagement from './UserManagement';
 import { VideoConfig, ImageConfig } from '../types';
+import { convertToApiPayload } from '../config/api';
+
+type ViewType = 'editor' | 'imageEditor' | 'videos' | 'files' | 'templates' | 'users';
 
 interface MainContentProps {
-  currentView: 'editor' | 'imageEditor' | 'videos' | 'files';
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
   videoConfig: VideoConfig;
   onVideoConfigChange: (config: VideoConfig) => void;
   imageConfig: ImageConfig;
@@ -20,6 +23,7 @@ interface MainContentProps {
 
 const MainContent: React.FC<MainContentProps> = ({
   currentView,
+  onViewChange,
   videoConfig,
   onVideoConfigChange,
   imageConfig,
@@ -56,6 +60,32 @@ const MainContent: React.FC<MainContentProps> = ({
       {currentView === 'files' && (
         <div className="overflow-auto h-full">
           <FileManagement />
+        </div>
+      )}
+
+      {currentView === 'templates' && (
+        <div className="overflow-auto h-full">
+          <UserTemplatesManager
+            currentVideoConfig={convertToApiPayload(videoConfig)}
+            currentImageConfig={{ config: imageConfig }}
+            onNavigate={(view) => onViewChange(view)}
+            onLoadTemplate={(rawConfig, type) => {
+              const unwrap = (c: any): any => {
+                if (!c) return c;
+                if (c.config) return unwrap(c.config);
+                return c;
+              };
+              const cfg = unwrap(rawConfig);
+              if (type === 'video' && cfg?.scenes) onVideoConfigChange(cfg as VideoConfig);
+              else if (type === 'image' && cfg?.scene) onImageConfigChange(cfg as ImageConfig);
+            }}
+          />
+        </div>
+      )}
+
+      {currentView === 'users' && (
+        <div className="overflow-auto h-full">
+          <UserManagement />
         </div>
       )}
     </main>

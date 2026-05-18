@@ -10,7 +10,7 @@ export default defineConfig({
     proxy: {
       // O proxy agora aponta para a URL correta do backend FastAPI 'http://146.19.9.149:8000'
       '/api': {
-        target: 'https://vidgen.dsantosinfo.com.br', 
+        target: 'http://localhost:8000', 
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {

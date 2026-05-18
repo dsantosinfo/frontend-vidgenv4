@@ -5,6 +5,9 @@ import { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import MainContent from './components/MainContent';
+import LoginPage from './components/Auth/LoginPage';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import { VideoConfig, Scene, TextElement, ImageConfig } from './types';
 
 const defaultTextElement: TextElement = {
@@ -57,12 +60,25 @@ const defaultImageConfig: ImageConfig = {
   decorative_elements: [],
 };
 
-function App() {
-  const [currentView, setCurrentView] = useState<'editor' | 'imageEditor' | 'videos' | 'files'>('editor');
+type ViewType = 'editor' | 'imageEditor' | 'videos' | 'files' | 'templates' | 'users';
+
+function AppInner() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [currentView, setCurrentView] = useState<ViewType>('editor');
   const [videoConfig, setVideoConfig] = useState<VideoConfig>(defaultVideoConfig);
   const [imageConfig, setImageConfig] = useState<ImageConfig>(defaultImageConfig);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return <LoginPage />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex">
@@ -82,6 +98,7 @@ function App() {
         
         <MainContent 
           currentView={currentView}
+          onViewChange={setCurrentView}
           videoConfig={videoConfig}
           onVideoConfigChange={setVideoConfig}
           imageConfig={imageConfig}
@@ -91,6 +108,14 @@ function App() {
         />
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
   );
 }
 

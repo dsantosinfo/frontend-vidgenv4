@@ -2,8 +2,9 @@
 // Substitua o conteúdo completo deste arquivo.
 
 import React, { useRef, useState } from 'react';
-import { Download, Upload, FileText, AlertCircle, CheckCircle, ClipboardPaste } from 'lucide-react';
+import { Download, Upload, FileText, AlertCircle, CheckCircle, ClipboardPaste, LayoutTemplate } from 'lucide-react';
 import { ImageConfig } from '../../types';
+import { createUserTemplate } from '../../config/api';
 
 interface ImageConfigManagerProps {
   config: ImageConfig;
@@ -59,6 +60,25 @@ const ImageConfigManager: React.FC<ImageConfigManagerProps> = ({ config, onConfi
     message: string;
   }>({ type: null, message: '' });
   const [pastedJson, setPastedJson] = useState('');
+
+  const [templateName, setTemplateName] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) return;
+    setSavingTemplate(true);
+    try {
+      const stripped = { config: { ...config, scene: { ...config.scene, text_elements: [] } } };
+      await createUserTemplate({ name: templateName.trim(), config: stripped });
+      setTemplateName('');
+      setImportStatus({ type: 'success', message: 'Template salvo (sem textos) com sucesso!' });
+    } catch (e: any) {
+      setImportStatus({ type: 'error', message: e.message || 'Erro ao salvar template.' });
+    } finally {
+      setSavingTemplate(false);
+      setTimeout(() => setImportStatus({ type: null, message: '' }), 3000);
+    }
+  };
 
   const exportConfig = () => {
     try {
@@ -191,6 +211,27 @@ const ImageConfigManager: React.FC<ImageConfigManagerProps> = ({ config, onConfi
                 placeholder="Cole a configuração JSON da imagem aqui..."
                 className="w-full p-2 border border-slate-300 rounded-lg min-h-[120px] font-mono text-xs"
             ></textarea>
+        </div>
+      </div>
+      <div className="mt-6 border-t pt-6">
+        <h4 className="font-medium text-slate-900 mb-3">Salvar como Template</h4>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={templateName}
+            onChange={e => setTemplateName(e.target.value)}
+            placeholder="Nome do template..."
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onKeyDown={e => e.key === 'Enter' && handleSaveTemplate()}
+          />
+          <button
+            onClick={handleSaveTemplate}
+            disabled={!templateName.trim() || savingTemplate}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+          >
+            <LayoutTemplate className="w-4 h-4" />
+            {savingTemplate ? 'Salvando...' : 'Salvar'}
+          </button>
         </div>
       </div>
     </div>
