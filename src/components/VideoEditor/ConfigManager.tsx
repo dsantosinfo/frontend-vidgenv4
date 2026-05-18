@@ -41,20 +41,7 @@ const cleanConfigForExport = (obj: any): any => {
   return newObj;
 };
 
-// Limpa text_elements de todas as cenas antes de salvar como template
-const stripTextElements = (payload: any): any => {
-  if (!payload?.config?.scenes) return payload;
-  return {
-    ...payload,
-    config: {
-      ...payload.config,
-      scenes: payload.config.scenes.map((scene: any) => ({
-        ...scene,
-        text_elements: [],
-      })),
-    },
-  };
-};
+
 
 const ConfigManager: React.FC<ConfigManagerProps> = ({ config, onConfigChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,14 +107,15 @@ const ConfigManager: React.FC<ConfigManagerProps> = ({ config, onConfigChange })
     if (!templateName.trim()) return;
     setSavingTemplate(true);
     try {
-      const payload = stripTextElements(convertToApiPayload(config));
+      const payload = convertToApiPayload(config);
+      const configToSave = payload.config ?? payload;
       if (savedTemplateId) {
-        await updateUserTemplate(savedTemplateId, { config: payload });
+        await updateUserTemplate(savedTemplateId, { config: configToSave });
         setImportStatus({ type: 'success', message: 'Template atualizado com sucesso!' });
       } else {
-        const result = await createUserTemplate({ name: templateName.trim(), config: payload });
+        const result = await createUserTemplate({ name: templateName.trim(), config: configToSave });
         setSavedTemplateId(result.id);
-        setImportStatus({ type: 'success', message: 'Template salvo (sem textos) com sucesso!' });
+        setImportStatus({ type: 'success', message: 'Template salvo com sucesso!' });
       }
     } catch (e: any) {
       setImportStatus({ type: 'error', message: e.message || 'Erro ao salvar template.' });

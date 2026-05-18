@@ -4,8 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     AlignLeft, AlignCenter, AlignRight,
-    ArrowUpLeft, ArrowUp, ArrowUpRight, ArrowLeft, Grip, ArrowRight, ArrowDownLeft, ArrowDown, ArrowDownRight,
-    Paintbrush, Blend, Type, Sparkles, Loader2, Plus, Trash2, Palette, ChevronDown, ChevronUp
+    Paintbrush, Blend, Type, Sparkles, Loader2, Plus, Trash2, Palette, ChevronDown, ChevronUp, ChevronRight
 } from 'lucide-react';
 import { TextElement, Font, Animation, Shadow, TextFill, Position, OuterGlow, Extrude, Curve, FileUploadRecord, FilePurpose } from '../../types';
 import { apiRequest, uploadFile } from '../../config/api';
@@ -202,17 +201,14 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
     }
   };
 
-  const positionPresets: { pos: Position, icon: React.ElementType }[] = [
-      { pos: { x: 'left', y: 'top' }, icon: ArrowUpLeft }, { pos: { x: 'center', y: 'top' }, icon: ArrowUp }, { pos: { x: 'right', y: 'top' }, icon: ArrowUpRight },
-      { pos: { x: 'left', y: 'center' }, icon: ArrowLeft }, { pos: { x: 'center', y: 'center' }, icon: Grip }, { pos: { x: 'right', y: 'center' }, icon: ArrowRight },
-      { pos: { x: 'left', y: 'bottom' }, icon: ArrowDownLeft }, { pos: { x: 'center', y: 'bottom' }, icon: ArrowDown }, { pos: { x: 'right', y: 'bottom' }, icon: ArrowDownRight },
-  ];
+  const X_PRESETS = ['left', 'center', 'right'] as const;
+  const Y_PRESETS = ['top', 'center', 'bottom', 'auto'] as const;
 
-  const isManualPosition = typeof textElement.position.x === 'number' || typeof textElement.position.y === 'number';
+  const isXNumeric = typeof textElement.position.x === 'number';
+  const isYNumeric = typeof textElement.position.y === 'number';
 
-  const handleManualPositionChange = (axis: 'x' | 'y', value: number) => {
-    const newPos = { ...textElement.position, [axis]: value };
-    handleChange({ position: newPos });
+  const handleAxisChange = (axis: 'x' | 'y', value: string | number) => {
+    handleChange({ position: { ...textElement.position, [axis]: value } });
   };
 
   const firstAutoIndex = sceneTextElements.findIndex(el => el.position.y === 'auto');
@@ -236,7 +232,7 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
         <details className="bg-white rounded-xl border border-slate-200 group" open>
             <summary className="p-4 flex items-center justify-between cursor-pointer font-medium text-slate-800">
                 <div className="flex items-center gap-3"><Type size={18} className="text-blue-600"/> Conteúdo e Fonte</div>
-                <div className="transform transition-transform group-open:rotate-90"><ArrowRight size={16}/></div>
+                <div className="transform transition-transform group-open:rotate-90"><ChevronRight size={16}/></div>
             </summary>
             <div className="p-4 border-t border-slate-100 space-y-4">
                 <textarea
@@ -299,7 +295,7 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
         <details className="bg-white rounded-xl border border-slate-200 group">
             <summary className="p-4 flex items-center justify-between cursor-pointer font-medium text-slate-800">
                 <div className="flex items-center gap-3"><Paintbrush size={18} className="text-green-600"/> Estilo de Preenchimento e Contorno</div>
-                <div className="transform transition-transform group-open:rotate-90"><ArrowRight size={16}/></div>
+                <div className="transform transition-transform group-open:rotate-90"><ChevronRight size={16}/></div>
             </summary>
             <div className="p-4 border-t border-slate-100 space-y-6">
                 <div>
@@ -369,87 +365,109 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
         <details className="bg-white rounded-xl border border-slate-200 group">
             <summary className="p-4 flex items-center justify-between cursor-pointer font-medium text-slate-800">
                 <div className="flex items-center gap-3"><Blend size={18} className="text-purple-600"/> Fundo e Posição</div>
-                <div className="transform transition-transform group-open:rotate-90"><ArrowRight size={16}/></div>
+                <div className="transform transition-transform group-open:rotate-90"><ChevronRight size={16}/></div>
             </summary>
              <div className="p-4 border-t border-slate-100 space-y-6">
                 <div>
                     <h4 className="font-medium text-slate-800 mb-3">Posicionamento</h4>
 
-                    {/* Toggle: Preset vs Manual */}
-                    <div className="flex items-center gap-2 mb-3">
-                        <button
-                            onClick={() => handleChange({ position: { x: 'center', y: 'center' } })}
-                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${!isManualPosition ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                        >
-                            Grade 3×3
-                        </button>
-                        <button
-                            onClick={() => handleChange({ position: { x: 0, y: 0 } })}
-                            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${isManualPosition ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                        >
-                            Manual (px)
-                        </button>
+                    {/* Eixo X */}
+                    <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm font-medium text-slate-700">Horizontal (X)</label>
+                            <button
+                                onClick={() => handleAxisChange('x', isXNumeric ? 'center' : 0)}
+                                className="text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600"
+                            >
+                                {isXNumeric ? 'Usar preset' : 'Usar px'}
+                            </button>
+                        </div>
+                        {isXNumeric ? (
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    value={textElement.position.x as number}
+                                    onChange={e => handleAxisChange('x', parseInt(e.target.value) || 0)}
+                                    className="w-full p-2 border border-slate-300 rounded-lg font-mono text-sm"
+                                />
+                                <span className="text-xs text-slate-500 whitespace-nowrap">px da esquerda</span>
+                            </div>
+                        ) : (
+                            <div className="flex gap-1">
+                                {X_PRESETS.map(v => (
+                                    <button
+                                        key={v}
+                                        onClick={() => handleAxisChange('x', v)}
+                                        className={`flex-1 py-1.5 text-sm rounded-md capitalize transition-colors ${
+                                            textElement.position.x === v ? 'bg-blue-500 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                        }`}
+                                    >
+                                        {v === 'left' ? 'Esq' : v === 'center' ? 'Centro' : 'Dir'}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Preset Grid */}
-                    {!isManualPosition && (
-                        <div className="p-2 bg-slate-100 rounded-lg border border-slate-200 grid grid-cols-3 gap-1">
-                            {positionPresets.map(({ pos, icon: Icon }) => (
-                                <button key={`${pos.x}-${pos.y}`} onClick={() => handleChange({ position: pos })} className={`p-2 rounded-md transition-colors ${textElement.position.x === pos.x && textElement.position.y === pos.y ? 'bg-blue-500 text-white' : 'hover:bg-slate-200'}`}>
-                                    <Icon size={18} className="mx-auto"/>
-                                </button>
-                            ))}
+                    {/* Eixo Y */}
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm font-medium text-slate-700">Vertical (Y)</label>
+                            <button
+                                onClick={() => handleAxisChange('y', isYNumeric ? 'center' : 0)}
+                                className="text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600"
+                            >
+                                {isYNumeric ? 'Usar preset' : 'Usar px'}
+                            </button>
+                        </div>
+                        {isYNumeric ? (
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    value={textElement.position.y as number}
+                                    onChange={e => handleAxisChange('y', parseInt(e.target.value) || 0)}
+                                    className="w-full p-2 border border-slate-300 rounded-lg font-mono text-sm"
+                                />
+                                <span className="text-xs text-slate-500 whitespace-nowrap">px do topo</span>
+                            </div>
+                        ) : (
+                            <div className="flex gap-1">
+                                {Y_PRESETS.map(v => (
+                                    <button
+                                        key={v}
+                                        onClick={() => handleAxisChange('y', v)}
+                                        className={`flex-1 py-1.5 text-xs rounded-md capitalize transition-colors ${
+                                            textElement.position.y === v ? 'bg-blue-500 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                        }`}
+                                    >
+                                        {v === 'top' ? 'Topo' : v === 'center' ? 'Centro' : v === 'bottom' ? 'Base' : 'Auto'}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Ajuste vertical do bloco auto */}
+                    {isFirstAutoElement && textElement.position.y === 'auto' && (
+                        <div className="mt-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                Ajuste do bloco automático ({textElement.vertical_offset || 0}px)
+                            </label>
+                            <input
+                                type="range"
+                                min="-500" max="500"
+                                value={textElement.vertical_offset || 0}
+                                onChange={e => handleChange({ vertical_offset: parseInt(e.target.value) })}
+                                className="w-full"
+                            />
                         </div>
                     )}
 
-                    {/* Manual X/Y Inputs */}
-                    {isManualPosition && (
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Posição X (px)
-                                </label>
-                                <input
-                                    type="number"
-                                    value={typeof textElement.position.x === 'number' ? textElement.position.x : 0}
-                                    onChange={(e) => handleManualPositionChange('x', parseInt(e.target.value) || 0)}
-                                    className="w-full p-2 border border-slate-300 rounded-lg font-mono"
-                                    placeholder="0"
-                                />
-                                <p className="text-xs text-slate-500 mt-1">0 = borda esquerda</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Posição Y (px)
-                                </label>
-                                <input
-                                    type="number"
-                                    value={typeof textElement.position.y === 'number' ? textElement.position.y : 0}
-                                    onChange={(e) => handleManualPositionChange('y', parseInt(e.target.value) || 0)}
-                                    className="w-full p-2 border border-slate-300 rounded-lg font-mono"
-                                    placeholder="0"
-                                />
-                                <p className="text-xs text-slate-500 mt-1">0 = topo da cena</p>
-                            </div>
-                        </div>
-                    )}
+                    {/* Resumo visual da posição atual */}
+                    <p className="mt-3 text-xs text-slate-500 font-mono bg-slate-50 px-3 py-1.5 rounded">
+                        position: x={String(textElement.position.x)}, y={String(textElement.position.y)}
+                    </p>
                 </div>
-                {isFirstAutoElement && textElement.position.y === 'auto' && (
-                  <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Ajuste Vertical do Bloco Automático ({textElement.vertical_offset || 0}px)
-                      </label>
-                      <input 
-                          type="range" 
-                          min="-500" 
-                          max="500" 
-                          value={textElement.vertical_offset || 0} 
-                          onChange={(e) => handleChange({ vertical_offset: parseInt(e.target.value) })} 
-                          className="w-full"
-                      />
-                      <p className="text-xs text-slate-500 mt-1">Use este controle para mover todo o bloco de textos automáticos para cima ou para baixo.</p>
-                  </div>
-                )}
                 <div>
                     <h4 className="font-medium text-slate-800 mb-3">Fundo do Texto</h4>
                     <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-4">
@@ -482,7 +500,7 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
         <details className="bg-white rounded-xl border border-slate-200 group">
             <summary className="p-4 flex items-center justify-between cursor-pointer font-medium text-slate-800">
                 <div className="flex items-center gap-3"><Sparkles size={18} className="text-amber-600"/> Efeitos Especiais e Animação</div>
-                <div className="transform transition-transform group-open:rotate-90"><ArrowRight size={16}/></div>
+                <div className="transform transition-transform group-open:rotate-90"><ChevronRight size={16}/></div>
             </summary>
             <div className="p-4 border-t border-slate-100 space-y-6">
                 <div>

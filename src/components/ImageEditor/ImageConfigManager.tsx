@@ -68,10 +68,14 @@ const ImageConfigManager: React.FC<ImageConfigManagerProps> = ({ config, onConfi
     if (!templateName.trim()) return;
     setSavingTemplate(true);
     try {
-      const stripped = { config: { ...config, scene: { ...config.scene, text_elements: [] } } };
-      await createUserTemplate({ name: templateName.trim(), config: stripped });
+      const configToSave = {
+        template: config.template,
+        scene: config.scene,
+        decorative_elements: config.decorative_elements ?? [],
+      };
+      await createUserTemplate({ name: templateName.trim(), config: configToSave });
       setTemplateName('');
-      setImportStatus({ type: 'success', message: 'Template salvo (sem textos) com sucesso!' });
+      setImportStatus({ type: 'success', message: 'Template salvo com sucesso!' });
     } catch (e: any) {
       setImportStatus({ type: 'error', message: e.message || 'Erro ao salvar template.' });
     } finally {
