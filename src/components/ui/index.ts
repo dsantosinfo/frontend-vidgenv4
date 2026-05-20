@@ -23,3 +23,4 @@ export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as UsageBar } from './UsageBar';
 export { default as PlanBadge } from './PlanBadge';
 export { default as ScenePreviewCard } from './ScenePreviewCard';
+export { default as PreviewModal } from './PreviewModal';

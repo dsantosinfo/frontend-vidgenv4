@@ -54,21 +54,21 @@ function Tabs<T extends string>({
 
   // underline (default)
   return (
-    <div className={`flex border-b border-slate-200 overflow-x-auto ${className}`}>
+    <div className={`flex border-b border-slate-200 overflow-x-auto scrollbar-none ${className}`}>
       {tabs.map(({ id, label, icon: Icon, badge }) => (
         <button
           key={id}
           onClick={() => onChange(id)}
-          className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+          className={`flex items-center gap-1 px-2.5 py-2 text-xs font-medium border-b-2 whitespace-nowrap transition-colors shrink-0 sm:px-3 sm:py-2.5 sm:text-sm sm:gap-1.5 ${
             active === id
               ? 'border-blue-600 text-blue-600'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
           }`}
         >
-          {Icon && <Icon className="w-4 h-4" />}
-          {label}
+          {Icon && <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+          <span>{label}</span>
           {badge !== undefined && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+            <span className={`px-1 py-0.5 rounded-full text-[9px] font-bold sm:text-[10px] sm:px-1.5 ${
               active === id ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
             }`}>
               {badge}

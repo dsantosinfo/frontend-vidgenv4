@@ -34,11 +34,15 @@ export const convertToApiPayload = (config: VideoConfig) => {
           : null,
         text_elements: scene.text_elements.map(textEl => {
           const { animation, ...restOfTextEl } = textEl;
+          const normalizeAnim = (a: any) => {
+            if (!a) return null;
+            if (typeof a === 'string') return { type: a, duration: DEFAULT_ANIMATION_DURATION };
+            if (typeof a === 'object' && a.type) return { type: a.type, duration: a.duration ?? DEFAULT_ANIMATION_DURATION };
+            return null;
+          };
           return {
             ...restOfTextEl,
-            animation: animation
-              ? { type: animation, duration: DEFAULT_ANIMATION_DURATION }
-              : null
+            animation: normalizeAnim(animation),
           };
         })
       };
@@ -398,6 +402,35 @@ export const generateSimplifiedImage = async (data: SimplifiedVideoRequest) =>
     method: 'POST',
     body: JSON.stringify(data),
   });
+
+// --- API Tokens ---
+
+export interface ApiTokenResponse {
+  id: string;
+  company_id: string;
+  name: string;
+  is_active: boolean;
+  last_used_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+  created_by_email: string | null;
+}
+
+export interface ApiTokenCreatedResponse extends ApiTokenResponse {
+  token: string;
+}
+
+export const listApiTokens = (companyId: string): Promise<ApiTokenResponse[]> =>
+  apiRequest(`/api/v1/companies/${companyId}/tokens`);
+
+export const createApiToken = (companyId: string, data: { name: string; expires_at?: string | null }): Promise<ApiTokenCreatedResponse> =>
+  apiRequest(`/api/v1/companies/${companyId}/tokens`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const revokeApiToken = (companyId: string, tokenId: string): Promise<void> =>
+  apiRequest(`/api/v1/companies/${companyId}/tokens/${tokenId}`, { method: 'DELETE' });
 
 // --- Admin ---
 

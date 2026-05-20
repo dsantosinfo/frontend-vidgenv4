@@ -1,7 +1,7 @@
 // src/components/ImageEditor/index.tsx
 import React, { useState } from 'react';
 import { ImageConfig, TextElement } from '../../types';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Eye } from 'lucide-react';
 import ImageEditorTabs, { ImageEditorTab } from './ImageEditorTabs';
 import TemplateSelector from '../VideoEditor/TemplateSelector';
 import BackgroundEditor from '../VideoEditor/BackgroundEditor';
@@ -10,7 +10,7 @@ import DecorativeElementsEditor from '../VideoEditor/DecorativeElementsEditor';
 import GenerateImageButton from './GenerateImageButton';
 import ImagePreview from './ImagePreview';
 import ImageConfigManager from './ImageConfigManager';
-import { SectionCard } from '../ui';
+import { SectionCard, PreviewModal } from '../ui';
 
 interface ImageEditorProps {
   config: ImageConfig;
@@ -24,6 +24,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<ImageEditorTab>('background');
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleSceneChange = (updates: Partial<ImageConfig['scene']>) =>
     onConfigChange({ ...config, scene: { ...config.scene, ...updates } });
@@ -54,6 +55,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
           <TemplateSelector
             selectedTemplate={config.template}
             onTemplateChange={t => onConfigChange({ ...config, template: t })}
+            editorType="image"
+            onLoadUserTemplate={raw => {
+              const unwrap = (c: any): any => c?.config ? unwrap(c.config) : c;
+              const cfg = unwrap(raw);
+              if (cfg?.scene) onConfigChange(cfg);
+            }}
           />
         );
       case 'background':
@@ -155,6 +162,19 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
           )}
         </div>
       </div>
+
+      {/* Botão flutuante de preview — mobile */}
+      <button
+        onClick={() => setPreviewOpen(true)}
+        className="lg:hidden fixed bottom-20 right-4 z-40 flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white rounded-full shadow-lg text-xs font-medium"
+      >
+        <Eye className="w-4 h-4" /> Preview
+      </button>
+
+      {/* Modal de preview — mobile */}
+      <PreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Preview da Imagem">
+        <ImagePreview config={config} isGenerating={isGenerating} />
+      </PreviewModal>
     </div>
   );
 };

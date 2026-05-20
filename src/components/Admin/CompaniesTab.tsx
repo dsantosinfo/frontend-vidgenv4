@@ -13,6 +13,7 @@ import {
 } from '../../config/api';
 import { Avatar, Badge, SectionCard, EmptyState, LoadingSpinner, StatusBanner, ConfirmDialog } from '../ui';
 import PlanBadge from '../ui/PlanBadge';
+import ApiTokensPanel from '../ApiTokensPanel';
 
 // ─── Painel de plano de uma empresa ─────────────────────────────────────────
 const CompanyPlanPanel: React.FC<{ companyId: string }> = ({ companyId }) => {
@@ -298,6 +299,7 @@ const CompaniesTab: React.FC = () => {
   const [companies, setCompanies]     = useState<CompanyResponse[]>([]);
   const [loading, setLoading]         = useState(true);
   const [expandedId, setExpandedId]   = useState<string | null>(null);
+  const [expandedPanel, setExpandedPanel] = useState<Record<string, 'members' | 'plan' | 'tokens'>>({});
   const [editingId, setEditingId]     = useState<string | null>(null);
   const [editForm, setEditForm]       = useState<any>({});
   const [saving, setSaving]           = useState(false);
@@ -542,15 +544,30 @@ const CompaniesTab: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Painel de membros */}
-                  {isExpanded && (
-                    <div className="px-4 pb-3 bg-slate-50 border-t border-slate-100">
-                      <p className="text-xs font-semibold text-slate-600 mt-2 mb-1 flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" /> Membros da empresa
-                      </p>
-                      <CompanyMembersPanel companyId={c.id} />
-                    </div>
-                  )}
+                  {/* Painel expandido com sub-abas */}
+                  {isExpanded && (() => {
+                    const panel = expandedPanel[c.id] ?? 'members';
+                    const setPanel = (p: 'members' | 'plan' | 'tokens') =>
+                      setExpandedPanel(prev => ({ ...prev, [c.id]: p }));
+                    return (
+                      <div className="px-4 pb-3 bg-slate-50 border-t border-slate-100">
+                        {/* Sub-tabs */}
+                        <div className="flex gap-1 mt-2 mb-2">
+                          {(['members', 'plan', 'tokens'] as const).map(p => (
+                            <button key={p} onClick={() => setPanel(p)}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-colors ${
+                                panel === p ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-200'
+                              }`}>
+                              {p === 'members' ? 'Membros' : p === 'plan' ? 'Plano' : 'API Tokens'}
+                            </button>
+                          ))}
+                        </div>
+                        {panel === 'members' && <CompanyMembersPanel companyId={c.id} />}
+                        {panel === 'plan'    && <CompanyPlanPanel companyId={c.id} />}
+                        {panel === 'tokens'  && <ApiTokensPanel companyId={c.id} />}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}

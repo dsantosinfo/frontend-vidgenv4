@@ -9,6 +9,8 @@ import DecorativeElementsEditor from './DecorativeElementsEditor';
 import ConfigManager from './ConfigManager';
 import GenerateButton from './GenerateButton';
 import ScenePreview from './ScenePreview';
+import { Eye } from 'lucide-react';
+import { PreviewModal } from '../ui';
 
 interface VideoEditorProps {
   config: VideoConfig;
@@ -22,6 +24,7 @@ const VideoEditor: React.FC<VideoEditorProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<VideoEditorTab>('scenes');
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const isScenes = activeTab === 'scenes';
   const activeScene = config.scenes[Math.min(activeSceneIndex, config.scenes.length - 1)];
@@ -42,6 +45,12 @@ const VideoEditor: React.FC<VideoEditorProps> = ({
             <TemplateSelector
               selectedTemplate={config.template}
               onTemplateChange={t => onConfigChange({ ...config, template: t })}
+              editorType="video"
+              onLoadUserTemplate={raw => {
+                const unwrap = (c: any): any => c?.config ? unwrap(c.config) : c;
+                const cfg = unwrap(raw);
+                if (cfg?.scenes) onConfigChange(cfg);
+              }}
             />
           )}
           {activeTab === 'scenes' && (
@@ -96,6 +105,27 @@ const VideoEditor: React.FC<VideoEditorProps> = ({
           onGeneratingChange={onGeneratingChange}
         />
       </div>
+
+      {/* Botão flutuante de preview — mobile */}
+      {activeScene && (
+        <button
+          onClick={() => setPreviewOpen(true)}
+          className="lg:hidden fixed bottom-20 right-4 z-40 flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white rounded-full shadow-lg text-xs font-medium"
+        >
+          <Eye className="w-4 h-4" /> Preview
+        </button>
+      )}
+
+      {/* Modal de preview — mobile */}
+      <PreviewModal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Preview da Cena">
+        {activeScene && (
+          <ScenePreview
+            scene={activeScene}
+            template={config.template}
+            decorativeElements={config.decorative_elements}
+          />
+        )}
+      </PreviewModal>
     </div>
   );
 };

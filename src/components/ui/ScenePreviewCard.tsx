@@ -36,15 +36,29 @@ const ScenePreviewCard: React.FC<ScenePreviewCardProps> = ({
     setLoading(true);
     setError(null);
     try {
+      const normalizeAnimation = (anim: any) => {
+        if (!anim) return null;
+        if (typeof anim === 'string') return { type: anim, duration: 1.0 };
+        if (typeof anim === 'object' && anim.type) return { type: anim.type, duration: anim.duration ?? 1.0 };
+        return null;
+      };
+
+      const normalizeTransition = (t: any) => {
+        if (!t) return null;
+        if (typeof t === 'string') return { type: t, duration: 1.0 };
+        if (typeof t === 'object' && t.type) return { type: t.type, duration: t.duration ?? 1.0 };
+        return null;
+      };
+
       const payload = {
         template,
         fps: 10,
         scene: {
           ...scene,
-          transition_from_previous: scene.transition ? { type: scene.transition, duration: 1.0 } : null,
+          transition_from_previous: normalizeTransition(scene.transition),
           text_elements: scene.text_elements.map(el => ({
             ...el,
-            animation: el.animation ? { type: el.animation, duration: 1.0 } : null,
+            animation: normalizeAnimation(el.animation),
           })),
         },
         decorative_elements: decorativeElements,

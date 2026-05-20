@@ -12,10 +12,11 @@ import FileManagement from '../FileManagement';
 import UserTemplatesManager from '../UserTemplatesManager';
 import CompanyProfileTab from './CompanyProfileTab';
 import SubscriptionTab from './SubscriptionTab';
+import ApiTokensPanel from '../ApiTokensPanel';
 import { StatusBanner, Avatar, SectionCard, Tabs, ConfirmDialog } from '../ui';
 import type { ViewType } from '../Sidebar';
 
-type Tab = 'identity' | 'profile' | 'subscription' | 'members' | 'files' | 'templates' | 'presets';
+type Tab = 'identity' | 'profile' | 'subscription' | 'members' | 'files' | 'templates' | 'presets' | 'api-tokens';
 
 interface CompanySettingsPageProps {
   currentVideoConfig?: Record<string, any>;
@@ -272,6 +273,7 @@ const CompanySettingsPage: React.FC<CompanySettingsPageProps> = ({
           <option value="files">Arquivos</option>
           <option value="templates">Templates</option>
           <option value="presets">Presets</option>
+          <option value="api-tokens">API Tokens</option>
         </select>
       </div>
       <div className="hidden sm:block">
@@ -284,6 +286,7 @@ const CompanySettingsPage: React.FC<CompanySettingsPageProps> = ({
             { id: 'files',        label: 'Arquivos' },
             { id: 'templates',    label: 'Templates' },
             { id: 'presets',      label: 'Presets' },
+            { id: 'api-tokens',   label: 'API Tokens' },
           ]}
           active={tab}
           onChange={setTab}
@@ -304,6 +307,7 @@ const CompanySettingsPage: React.FC<CompanySettingsPageProps> = ({
         />
       )}
       {tab === 'presets'      && <BrandPresetList companyId={activeCompany.id} />}
+      {tab === 'api-tokens'   && <ApiTokensPanel companyId={activeCompany.id} />}
     </div>
   );
 };
