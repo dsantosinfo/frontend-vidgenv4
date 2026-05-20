@@ -53,12 +53,12 @@ const GenerateImageButton: React.FC<GenerateImageButtonProps> = ({
     <button
       onClick={generateImage}
       disabled={isGenerating || !canGenerate()}
-      className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all text-lg bg-gradient-to-r from-green-500 to-cyan-500 text-white hover:from-green-600 hover:to-cyan-600 shadow-lg hover:shadow-xl disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none disabled:cursor-not-allowed"
+      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all text-sm bg-gradient-to-r from-green-500 to-cyan-500 text-white hover:from-green-600 hover:to-cyan-600 shadow disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none disabled:cursor-not-allowed"
     >
       {isGenerating ? (
-        <><Loader2 className="w-6 h-6 animate-spin" /> Gerando Imagem...</>
+        <><Loader2 className="w-4 h-4 animate-spin" /> Gerando...</>
       ) : (
-        <><ImageIcon className="w-6 h-6" /> Gerar Imagem</>
+        <><ImageIcon className="w-4 h-4" /> Gerar Imagem</>
       )}
     </button>
   );

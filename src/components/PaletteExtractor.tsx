@@ -1,25 +1,36 @@
-import React, { useState } from 'react';
-import { Upload, Palette, Copy, Check } from 'lucide-react';
-import { extractPalette, PaletteExtractOptions } from '../config/api';
+import React, { useState, useEffect } from 'react';
+import { Upload, Palette, Copy, Check, Layers } from 'lucide-react';
+import { extractPalette, PaletteExtractOptions, getCompanyPresets } from '../config/api';
 import { PaletteColorItem, PaletteExtractionResponse } from '../types';
+import { useCompany } from '../context/CompanyContext';
 
 interface PaletteExtractorProps {
   onColorSelect?: (hex: string) => void;
 }
 
 const PaletteExtractor: React.FC<PaletteExtractorProps> = ({ onColorSelect }) => {
+  const { activeCompany } = useCompany();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<PaletteExtractionResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
+  const [companyPalettes, setCompanyPalettes] = useState<any[]>([]);
   const [options, setOptions] = useState<PaletteExtractOptions>({
     num_colors: 8,
     min_percent: 5,
     tolerance: 40,
     palette_type: 'full',
   });
+
+  useEffect(() => {
+    if (activeCompany) {
+      getCompanyPresets(activeCompany.id, 'palette')
+        .then(data => setCompanyPalettes(data ?? []))
+        .catch(() => {});
+    }
+  }, [activeCompany]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -59,6 +70,34 @@ const PaletteExtractor: React.FC<PaletteExtractorProps> = ({ onColorSelect }) =>
         <Palette className="w-5 h-5 text-purple-600" />
         <h3 className="font-semibold text-slate-900">Extrator de Paleta</h3>
       </div>
+
+      {/* Paletas da empresa */}
+      {companyPalettes.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-slate-600 mb-2 flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5 text-indigo-500" /> Paletas da empresa
+          </p>
+          <div className="space-y-2">
+            {companyPalettes.map((p: any) => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span className="text-xs text-slate-600 w-24 truncate">{p.name}</span>
+                <div className="flex gap-1 flex-wrap">
+                  {(p.config?.colors ?? []).map((c: string, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => handleCopy(c)}
+                      title={c}
+                      className="w-6 h-6 rounded border border-slate-200 hover:scale-110 transition-transform"
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <hr className="my-3 border-slate-200" />
+        </div>
+      )}
 
       {/* Upload */}
       <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">

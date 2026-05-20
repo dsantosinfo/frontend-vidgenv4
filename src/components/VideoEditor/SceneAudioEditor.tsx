@@ -48,7 +48,7 @@ const SceneAudioEditor: React.FC<SceneAudioEditorProps> = ({ scene, onUpdateScen
   };
 
   const addSoundEffect = (file: FileUploadRecord) => {
-    const newEffect: AudioTrack = { path: file.new_filename, volume: 1.0 };
+    const newEffect: AudioTrack = { path: file.file_path, volume: 1.0 };
     onUpdateScene({ effects_audio: [...scene.effects_audio, newEffect] });
   };
 
@@ -73,8 +73,8 @@ const SceneAudioEditor: React.FC<SceneAudioEditorProps> = ({ scene, onUpdateScen
           {audioFiles.map(file => (
             <button
               key={file.id}
-              onClick={() => onUpdateScene({ narration: { path: file.new_filename, volume: 1.0 } })}
-              className={`p-3 border rounded-lg text-left truncate ${scene.narration?.path === file.new_filename ? 'border-blue-500 bg-blue-50' : 'hover:bg-slate-50'}`}
+              onClick={() => onUpdateScene({ narration: { path: file.file_path, volume: 1.0 } })}
+              className={`p-3 border rounded-lg text-left truncate ${scene.narration?.path === file.file_path ? 'border-blue-500 bg-blue-50' : 'hover:bg-slate-50'}`}
               title={file.original_filename}
             >
               <Music size={14} className="inline mr-2" /> {file.original_filename}

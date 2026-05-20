@@ -1,3 +1,4 @@
+// src/components/VideoEditor/TemplateSelector.tsx
 import React from 'react';
 import { Monitor, Smartphone, Square, Youtube } from 'lucide-react';
 import { VIDEO_TEMPLATES } from '../../config/templates';
@@ -7,84 +8,51 @@ interface TemplateSelectorProps {
   onTemplateChange: (template: string) => void;
 }
 
-const getIcon = (templateName: string) => {
-  switch (templateName) {
-    case 'instagram_feed':
-    case 'instagram_story':
-      return Square;
-    case 'tiktok':
-      return Smartphone;
-    case 'youtube_thumbnail':
-      return Youtube;
-    default:
-      return Monitor;
-  }
+const ICONS: Record<string, React.ElementType> = {
+  instagram_feed: Square,
+  instagram_story: Square,
+  tiktok: Smartphone,
+  youtube_thumbnail: Youtube,
 };
 
-const TemplateSelector: React.FC<TemplateSelectorProps> = ({
-  selectedTemplate,
-  onTemplateChange
-}) => {
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Escolha o Template de Vídeo</h2>
-        <p className="text-slate-600">Selecione o formato perfeito para seu conteúdo de vídeo</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Object.values(VIDEO_TEMPLATES).map((template) => {
-          const Icon = getIcon(template.name);
-          const isSelected = selectedTemplate === template.name;
-          
-          return (
-            <button
-              key={template.name}
-              onClick={() => onTemplateChange(template.name)}
-              className={`group p-6 rounded-xl border-2 transition-all duration-200 text-left ${
-                isSelected
-                  ? 'border-blue-500 bg-blue-50 shadow-lg scale-105'
-                  : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-md'
-              }`}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`p-3 rounded-lg ${
-                  isSelected ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-blue-100'
-                }`}>
-                  <Icon className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className={`font-semibold ${
-                    isSelected ? 'text-blue-900' : 'text-slate-900'
-                  }`}>
-                    {template.name.replace('_', ' ').toUpperCase()}
-                  </h3>
-                  <p className="text-sm text-slate-600">{template.aspectRatio}</p>
-                </div>
-              </div>
-              
-              <p className={`text-sm mb-3 ${
-                isSelected ? 'text-blue-800' : 'text-slate-600'
-              }`}>
-                {template.description}
+const TemplateSelector: React.FC<TemplateSelectorProps> = ({ selectedTemplate, onTemplateChange }) => (
+  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+    {Object.values(VIDEO_TEMPLATES).map(t => {
+      const Icon = ICONS[t.name] ?? Monitor;
+      const active = selectedTemplate === t.name;
+      return (
+        <button
+          key={t.name}
+          onClick={() => onTemplateChange(t.name)}
+          className={`flex flex-col gap-1.5 p-3 rounded-lg border text-left transition-all ${
+            active ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <div className={`p-1.5 rounded ${active ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
+              <Icon className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className={`text-xs font-semibold truncate ${active ? 'text-blue-800' : 'text-slate-800'}`}>
+                {t.description}
               </p>
-              
-              <div className="flex justify-between text-xs text-slate-500">
-                <span>{template.width} × {template.height}</span>
-                <span>{template.fps} FPS</span>
-              </div>
-              
-              {isSelected && (
-                <div className="mt-3 px-3 py-1 bg-blue-500 text-white text-xs rounded-full inline-block">
-                  Selecionado
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+              <p className="text-[10px] text-slate-400">{t.aspectRatio} · {t.width}×{t.height}</p>
+            </div>
+          </div>
+          <div className="flex items-end gap-1">
+            <div
+              className={`rounded-sm ${active ? 'bg-blue-300' : 'bg-slate-200'}`}
+              style={{
+                width: t.width >= t.height ? 28 : Math.round(28 * t.width / t.height),
+                height: t.height >= t.width ? 18 : Math.round(18 * t.height / t.width),
+              }}
+            />
+            {active && <span className="text-[9px] text-blue-500 font-medium">✓ Ativo</span>}
+          </div>
+        </button>
+      );
+    })}
+  </div>
+);
 
 export default TemplateSelector;

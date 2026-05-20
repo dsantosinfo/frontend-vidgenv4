@@ -1,3 +1,4 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { UserResponse, AuthState } from '../types';
 import { getMe, getStoredToken, clearStoredToken, login as apiLogin, register as apiRegister } from '../config/api';
@@ -20,13 +21,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearStoredToken();
     setToken(null);
     setUser(null);
+    // Não dispara auth:logout aqui para evitar loop — o evento é disparado
+    // apenas pelo apiRequest quando recebe 401
   }, []);
 
   useEffect(() => {
-    const handleLogout = () => logout();
-    window.addEventListener('auth:logout', handleLogout);
-    return () => window.removeEventListener('auth:logout', handleLogout);
-  }, [logout]);
+    // Escuta o evento disparado pelo apiRequest (sessão expirada)
+    const handleExternalLogout = () => {
+      clearStoredToken();
+      setToken(null);
+      setUser(null);
+    };
+    window.addEventListener('auth:logout', handleExternalLogout);
+    return () => window.removeEventListener('auth:logout', handleExternalLogout);
+  }, []);
 
   useEffect(() => {
     if (!token) { setIsLoading(false); return; }
@@ -48,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={{
-      user, token, isAuthenticated: !!user, isLoading, login, register, logout
+      user, token, isAuthenticated: !!user, isLoading, login, register, logout,
     }}>
       {children}
     </AuthContext.Provider>

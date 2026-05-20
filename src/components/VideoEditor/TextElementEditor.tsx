@@ -4,12 +4,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     AlignLeft, AlignCenter, AlignRight,
-    Paintbrush, Blend, Type, Sparkles, Loader2, Plus, Trash2, Palette, ChevronDown, ChevronUp, ChevronRight
+    Paintbrush, Blend, Type, Sparkles, Loader2, Plus, Trash2, Palette, ChevronDown, ChevronUp, ChevronRight, Layers
 } from 'lucide-react';
 import { TextElement, Font, Animation, Shadow, TextFill, Position, OuterGlow, Extrude, Curve, FileUploadRecord, FilePurpose } from '../../types';
-import { apiRequest, uploadFile } from '../../config/api';
+import { apiRequest, uploadFile, getCompanyPresets } from '../../config/api';
 import { getTemplateWidth } from '../../config/templates';
 import PaletteExtractor from '../PaletteExtractor';
+import { useCompany } from '../../context/CompanyContext';
 
 const PaletteSection: React.FC<{ onColorSelect: (hex: string) => void }> = ({ onColorSelect }) => {
   const [open, setOpen] = useState(false);
@@ -47,18 +48,26 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
   sceneTextElements,
   template = 'instagram_story'
 }) => {
+  const { activeCompany } = useCompany();
   const [fonts, setFonts] = useState<Font[]>([]);
   const [animations, setAnimations] = useState<Animation[]>([]);
   const [textureFiles, setTextureFiles] = useState<FileUploadRecord[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [textPresets, setTextPresets] = useState<any[]>([]);
+  const [showTextPresets, setShowTextPresets] = useState(false);
   const textureFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchFonts();
     fetchAnimations();
     fetchTextureFiles();
-  }, []);
+    if (activeCompany) {
+      getCompanyPresets(activeCompany.id, 'text_style')
+        .then(data => setTextPresets(data ?? []))
+        .catch(() => {});
+    }
+  }, [activeCompany]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -228,6 +237,43 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
             </div>
         </div>
 
+        {/* Presets da empresa */}
+        {textPresets.length > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <button
+              onClick={() => setShowTextPresets(o => !o)}
+              className="flex items-center gap-2 text-sm font-medium text-slate-700 w-full"
+            >
+              <Layers className="w-4 h-4 text-indigo-500" />
+              Presets da empresa
+              {showTextPresets ? <ChevronUp className="w-3.5 h-3.5 ml-auto" /> : <ChevronDown className="w-3.5 h-3.5 ml-auto" />}
+            </button>
+            {showTextPresets && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {textPresets.map((p: any) => (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      const cfg = p.config ?? {};
+                      handleChange({
+                        ...(cfg.font_size ? { font_size: cfg.font_size } : {}),
+                        ...(cfg.alignment ? { alignment: cfg.alignment } : {}),
+                        ...(cfg.fill ? { fill: { ...textElement.fill, ...cfg.fill } } : {}),
+                        ...(cfg.stroke_color ? { stroke_color: cfg.stroke_color } : {}),
+                        ...(cfg.stroke_width ? { stroke_width: cfg.stroke_width } : {}),
+                        ...(cfg.shadow !== undefined ? { shadow: cfg.shadow } : {}),
+                      });
+                    }}
+                    className="px-3 py-1.5 text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Conteúdo e Fonte */}
         <details className="bg-white rounded-xl border border-slate-200 group" open>
             <summary className="p-4 flex items-center justify-between cursor-pointer font-medium text-slate-800">
@@ -337,7 +383,7 @@ const TextElementEditor: React.FC<TextElementEditorProps> = ({
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Imagem de Textura</label>
                                 <select value={textElement.fill.image_path || ''} onChange={(e) => handleFillChange({ image_path: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg">
                                     <option value="">Selecione uma textura</option>
-                                    {textureFiles.map(file => <option key={file.id} value={file.new_filename}>{file.original_filename}</option>)}
+                                    {textureFiles.map(file => <option key={file.id} value={file.file_path}>{file.original_filename}</option>)}
                                 </select>
                                 <button onClick={() => textureFileInputRef.current?.click()} className="text-sm text-blue-600 hover:underline mt-2">Fazer upload de nova textura</button>
                                 <input ref={textureFileInputRef} type="file" accept="image/*" onChange={handleTextureUpload} className="hidden" />

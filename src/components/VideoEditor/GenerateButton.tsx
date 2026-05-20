@@ -110,34 +110,37 @@ const GenerateButton: React.FC<GenerateButtonProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <button
         onClick={generateVideo}
         disabled={isGenerating || !canGenerate()}
-        className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all text-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all text-sm bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none disabled:cursor-not-allowed"
       >
         {isGenerating ? (
-          <><Loader2 className="w-6 h-6 animate-spin" /> Gerando... ({formatTime(generationTime)})</>
+          <><Loader2 className="w-4 h-4 animate-spin" /> Gerando... ({formatTime(generationTime)})</>
         ) : (
-          <><Play className="w-6 h-6" /> Gerar Vídeo</>
+          <><Play className="w-4 h-4" /> Gerar Vídeo</>
         )}
       </button>
 
       {!isGenerating && taskStatus && (
-        <div className={`flex items-center gap-3 p-4 rounded-lg ${
-          taskStatus.status === 'completed' 
-            ? 'bg-green-50 border border-green-200' 
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+          taskStatus.status === 'completed'
+            ? 'bg-green-50 border border-green-200'
             : 'bg-red-50 border border-red-200'
         }`}>
-          {taskStatus.status === 'completed' ? <CheckCircle className="w-5 h-5 text-green-600" /> : <AlertCircle className="w-5 h-5 text-red-600" />}
-          <div className="flex-1">
-            <span className={`text-sm font-medium ${taskStatus.status === 'completed' ? 'text-green-800' : 'text-red-800'}`}>
-              {taskStatus.status === 'completed' ? 'Vídeo gerado com sucesso! 🎉' : `Erro: ${taskStatus.error || 'Falha na geração'}`}
-            </span>
-          </div>
+          {taskStatus.status === 'completed'
+            ? <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+            : <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />}
+          <span className={`flex-1 font-medium ${
+            taskStatus.status === 'completed' ? 'text-green-800' : 'text-red-800'
+          }`}>
+            {taskStatus.status === 'completed' ? 'Vídeo gerado! 🎉' : `Erro: ${taskStatus.error || 'Falha na geração'}`}
+          </span>
           {taskStatus.status === 'completed' && taskStatus.download_url && (
-            <a href={taskStatus.download_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">
-              <Download className="w-4 h-4" /> Baixar
+            <a href={taskStatus.download_url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs font-medium shrink-0">
+              <Download className="w-3 h-3" /> Baixar
             </a>
           )}
         </div>

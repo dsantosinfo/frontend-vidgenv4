@@ -91,9 +91,8 @@ const BackgroundEditor: React.FC<BackgroundEditorProps> = ({
     }
   };
   
-  const getPreviewUrl = (filename: string) => {
-    return `${import.meta.env.VITE_API_BASE_URL}/uploads/${filename}`;
-  }
+  const getPreviewUrl = (file: FileUploadRecord) =>
+    `${import.meta.env.VITE_API_BASE_URL}/uploads/${file.file_path}`;
 
   return (
     <div className="space-y-4">
@@ -169,15 +168,15 @@ const BackgroundEditor: React.FC<BackgroundEditorProps> = ({
               {(background.type === 'image' ? files.images : files.videos).map((file) => (
                 <button
                   key={file.id}
-                  onClick={() => onBackgroundChange({ ...background, path: file.new_filename })}
+                  onClick={() => onBackgroundChange({ ...background, path: file.file_path })}
                   className={`relative p-1 rounded-lg border-2 text-left transition-all ${
-                    background.path === file.new_filename
+                    background.path === file.file_path
                       ? 'border-blue-500'
                       : 'border-transparent hover:border-slate-300'
                   }`}
                 >
                     <div className="aspect-video bg-slate-100 rounded overflow-hidden">
-                       <img src={getPreviewUrl(file.new_filename)} alt={file.original_filename} className="w-full h-full object-cover"/>
+                       <img src={getPreviewUrl(file)} alt={file.original_filename} className="w-full h-full object-cover"/>
                     </div>
                   <p className="text-xs font-medium text-slate-700 truncate mt-1" title={file.original_filename}>{file.original_filename}</p>
                 </button>

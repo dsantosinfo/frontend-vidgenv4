@@ -1,108 +1,152 @@
-import React from 'react';
-import { Menu, Video, Loader2, Image as ImageIcon, LayoutTemplate, Files, FolderOpen, LogOut, User, Users } from 'lucide-react';
+// src/components/Header.tsx
+import React, { useState, useRef, useEffect } from 'react';
+import { Menu, LogOut, ChevronDown, Building2, Settings } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
-
-type ViewType = 'editor' | 'imageEditor' | 'videos' | 'files' | 'templates' | 'users';
+import { useCompany } from '../context/CompanyContext';
+import { BRAND } from '../config/branding';
+import { Avatar } from './ui';
+import type { ViewType } from './Sidebar';
 
 interface HeaderProps {
   currentView: ViewType;
-  isGenerating: boolean;
   onToggleSidebar: () => void;
+  onViewChange: (view: ViewType) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentView, isGenerating, onToggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({ currentView, onToggleSidebar, onViewChange }) => {
   const { user, logout } = useAuth();
+  const { companies, activeCompany, switchCompany } = useCompany();
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const companyRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
 
-  const getTitle = () => {
-    switch (currentView) {
-      case 'editor': return 'Editor de Vídeo';
-      case 'imageEditor': return 'Gerador de Imagens';
-      case 'videos': return 'Vídeos Gerados';
-      case 'files': return 'Gerenciamento de Arquivos';
-      case 'templates': return 'Meus Templates';
-      case 'users': return 'Gestão de Usuários';
-      default: return 'Estúdio de Mídia';
-    }
-  };
+  const view = BRAND.viewTitles[currentView] ?? { title: 'VidGen', description: '' };
+  const hasMultiple = companies.length > 1;
 
-  const getDescription = () => {
-    switch (currentView) {
-      case 'editor': return 'Crie vídeos incríveis com ferramentas avançadas de edição';
-      case 'imageEditor': return 'Crie imagens estáticas com textos e efeitos';
-      case 'videos': return 'Gerencie e baixe seus vídeos gerados';
-      case 'files': return 'Faça upload e organize seus arquivos de mídia';
-      case 'templates': return 'Salve e reutilize suas configurações favoritas';
-      case 'users': return 'Gerencie contas, papéis e permissões';
-      default: return 'Plataforma profissional de criação de mídia';
-    }
-  };
-
-  const getIcon = () => {
-    switch (currentView) {
-      case 'editor': return <Video className="w-6 h-6 text-white" />;
-      case 'imageEditor': return <ImageIcon className="w-6 h-6 text-white" />;
-      case 'videos': return <Files className="w-6 h-6 text-white" />;
-      case 'files': return <FolderOpen className="w-6 h-6 text-white" />;
-      case 'templates': return <LayoutTemplate className="w-6 h-6 text-white" />;
-      case 'users': return <Users className="w-6 h-6 text-white" />;
-      default: return <Video className="w-6 h-6 text-white" />;
-    }
-  };
+  // Fecha dropdowns ao clicar fora
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (companyRef.current && !companyRef.current.contains(e.target as Node)) setCompanyOpen(false);
+      if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <header className="h-12 bg-white border-b border-slate-200 flex items-center px-3 gap-3 shrink-0">
+
+      {/* Botão menu mobile */}
+      <button
+        onClick={onToggleSidebar}
+        className="md:hidden p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+      >
+        <Menu className="w-4 h-4" />
+      </button>
+
+      {/* Título da view */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-slate-900 truncate">{view.title}</p>
+      </div>
+
+      {/* Empresa ativa */}
+      {activeCompany && (
+        <div className="relative" ref={companyRef}>
           <button
-            onClick={onToggleSidebar}
-            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            onClick={() => hasMultiple && setCompanyOpen(v => !v)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 rounded-lg text-xs transition-colors ${
+              hasMultiple ? 'hover:bg-slate-200 cursor-pointer' : 'cursor-default'
+            }`}
           >
-            <Menu className="w-5 h-5" />
+            <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span className="font-medium text-slate-700 max-w-[100px] truncate hidden sm:block">
+              {activeCompany.name}
+            </span>
+            {hasMultiple && (
+              <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${companyOpen ? 'rotate-180' : ''}`} />
+            )}
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
-              {getIcon()}
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900">{getTitle()}</h1>
-              <p className="text-sm text-slate-600">{getDescription()}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {isGenerating && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm font-medium">Gerando...</span>
+          {companyOpen && (
+            <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50">
+              <p className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                Suas empresas
+              </p>
+              <div className="max-h-56 overflow-y-auto">
+                {companies.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={async () => { setCompanyOpen(false); await switchCompany(c); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors ${
+                      c.id === activeCompany.id ? 'bg-blue-50' : ''
+                    }`}
+                  >
+                    <Avatar name={c.name} size="xs" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-slate-900 truncate">{c.name}</p>
+                      <p className="text-[10px] text-slate-400 font-mono truncate">{c.slug}</p>
+                    </div>
+                    {c.id === activeCompany.id && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="border-t border-slate-100 p-1.5">
+                <button
+                  onClick={() => { setCompanyOpen(false); onViewChange('company-settings'); }}
+                  className="w-full flex items-center gap-2 px-2.5 py-2 text-xs text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Configurações da empresa
+                </button>
+              </div>
             </div>
           )}
+        </div>
+      )}
 
-          {user && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
-                <User className="w-4 h-4 text-slate-500" />
-                <span className="text-sm text-slate-700 max-w-[120px] truncate">
-                  {user.full_name || user.email}
-                </span>
-                {(user.role === 'owner' || user.role === 'superadmin') && (
-                  <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">
-                    {user.role === 'owner' ? 'Owner' : 'Admin'}
-                  </span>
-                )}
+      {/* Avatar + dropdown do usuário */}
+      {user && (
+        <div className="relative" ref={userRef}>
+          <button
+            onClick={() => setUserOpen(v => !v)}
+            className="flex items-center gap-1.5 p-1 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <Avatar name={user.full_name || user.email} size="xs" />
+            <span className="text-xs text-slate-700 max-w-[80px] truncate hidden sm:block">
+              {user.full_name || user.email}
+            </span>
+            <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${userOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {userOpen && (
+            <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50">
+              <div className="px-3 py-2.5 border-b border-slate-100">
+                <p className="text-xs font-medium text-slate-900 truncate">{user.full_name || user.email}</p>
+                <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
               </div>
               <button
-                onClick={logout}
-                title="Sair"
-                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                onClick={() => { setUserOpen(false); onViewChange('profile'); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 transition-colors"
               >
-                <LogOut className="w-4 h-4" />
+                <Avatar name={user.full_name || user.email} size="xs" />
+                Meu perfil
               </button>
+              <div className="border-t border-slate-100 p-1.5">
+                <button
+                  onClick={() => { setUserOpen(false); logout(); }}
+                  className="w-full flex items-center gap-2 px-2.5 py-2 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Sair
+                </button>
+              </div>
             </div>
           )}
         </div>
-      </div>
+      )}
     </header>
   );
 };
